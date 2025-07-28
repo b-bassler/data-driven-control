@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: coptpy
+Version: 7.2.9
+Summary: The Python interface of the Cardinal Optimizer
+Home-page: https://www.shanshu.ai/copt
+Author: Cardinal Operations, LLC
+Author-email: coptsales@shanshu.ai
+License: Cardinal Operations, LLC
+                 End User License Agreement
+
