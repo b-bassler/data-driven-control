@@ -29,7 +29,7 @@ if not dateiliste:
 
 
 
-labels = ["VanWaarde", "Berberich","Seed 3", "Seed 4", "without noise","without noise2", "without noise3", "stochastic noise", "stochastic max"]
+labels = ["VanWaarde, T = 50", "VanWaarde, T = 100","Berberich T = 50", "Berberich T = 100", "without noise","without noise2", "without noise3", "stochastic noise", "stochastic max"]
 
 
 
@@ -68,6 +68,6 @@ ax.legend(fontsize=11)
 ax.set_xlabel(r'$A$', fontsize=14)
 ax.set_ylabel(r'$B$', fontsize=14)
 #ax.set_title('VanWaarde ', fontsize=16, pad=20)
-plt.scatter(0.3, 0.8, marker='x', color='red', s=100, linewidths=2)
+plt.scatter(0.5, 0.5, marker='x', color='red', s=100, linewidths=2)
 plt.tight_layout() 
 plt.show()

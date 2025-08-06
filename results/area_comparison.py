@@ -7,6 +7,7 @@ pfad_ellipse = r"C:\Users\benno\Desktop\Simulations\set_membership\withNoise\are
 pfad_ellipse_tsiamis = r"C:\Users\benno\Desktop\Simulations\Sys_id\area_analysis\ellipse_data_tsiamis\ellipse_area_data.npz"
 
 
+
 try:
     data_rechteck = np.load(pfad_rechteck)["rectangle_area_data"]
     data_ellipse = np.load(pfad_ellipse)["ellipse_area_data"]

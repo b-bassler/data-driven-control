@@ -3,8 +3,8 @@ import os
 np.random.seed(1)
 
 
-a = 0.3
-b = 0.8
+a = 0.5
+b = 0.5
 x0 = 0
 T = 100000 
 
@@ -13,13 +13,13 @@ w_max = 0.01  # Maximale Abweichung der Störungen bei Uniformverteilung
 sigma_w_quadrat = (w_max**2) / 3  # Varianz für die Normalverteilung
 
 z = 1.96 #Z-Quantil für 1-delta = 0.95
-a = w_max
-sigma_w = a / z
+# a = w_max
+# sigma_w = a / z
 
-sigma_quadrat = sigma_w**2
+# sigma_quadrat = sigma_w**2
 
 
-#sigma_w = np.sqrt(sigma_w_quadrat)
+sigma_w = np.sqrt(sigma_w_quadrat)
 
 abweichung = 1
  

@@ -10,6 +10,7 @@ import rsome as rso
 
 
 T = 100
+sample_size = 200
 
 data_folder = r"C:\Users\benno\Desktop\Simulations\Data\generated_data"
 daten_dict = {
@@ -39,12 +40,12 @@ W_minus = W[:, 0:T]
 # print("Shape of U_minus:", U_minus.shape)
 
 
-A_min = 0.25
-A_max = 0.35
-B_min = 0.75
-B_max = 0.85
+A_min = 0.45
+A_max = 0.55
+B_min = 0.45
+B_max = 0.55
 
-sample_size = 200
+
 
 #Noisemodel, Random uniform noise with maximum amplitude w_max
 w_max = 0.01
@@ -101,19 +102,19 @@ for i in range(A_mesh.shape[0]):
 print(f"Anzahl der (A,B)-Paare mit allen Eigenwerten > 0: {len(valid_pairs)}")
 
 
-if valid_pairs:
-    A_ok, B_ok = zip(*valid_pairs)
-    plt.figure()
-    plt.scatter(0.3, 0.8, c="red", marker="x", s=100, label="(A=0.3, B=0.8)", zorder=2)
-    plt.scatter(A_ok, B_ok, s=15)
-    plt.xlim(0.25, 0.35)   
-    plt.ylim(0.75, 0.85)
-    plt.xlabel("A")
-    plt.ylabel("B")
-    plt.title(f"Matching (A,B), with SNR of {SNR_dB} in dB")
-    plt.grid(True)
-    plt.show()
-    plt.scatter(A_ok, B_ok, s=15, label="True values")
+# if valid_pairs:
+#     A_ok, B_ok = zip(*valid_pairs)
+#     plt.figure()
+#     plt.scatter(0.5, 0.5, c="red", marker="x", s=100, label="(A=0.3, B=0.8)", zorder=2)
+#     plt.scatter(A_ok, B_ok, s=15)
+#     #plt.xlim(0.25, 0.35)   
+#     #plt.ylim(0.75, 0.85)
+#     plt.xlabel("A")
+#     plt.ylabel("B")
+#     plt.title(f"Matching (A,B), with SNR of {SNR_dB} in dB")
+#     plt.grid(True)
+#     plt.show()
+#     plt.scatter(A_ok, B_ok, s=15, label="True values")
 
      
 
@@ -197,7 +198,7 @@ ordner_name = "results"
 
 os.makedirs(ordner_name, exist_ok=True)
 
-dateiname = "simulation_ergebnis_1.npz"
+dateiname = "simulation_ergebnis_2.npz"
 voller_pfad = os.path.join(ordner_name, dateiname)
 
 
@@ -208,7 +209,80 @@ np.savez(voller_pfad,
 
 print(f"Ergebnisse in '{voller_pfad}' gespeichert.")
 
+#
+#---------------------------------------------------------------------------------------------------------------------------
+#
+
+#----------------------------------------------
+# Bestimmung von max_a, max_b und Worst-Case
+#----------------------------------------------
+
+# 1. Generiere Punkte der Ellipse relativ zum Zentrum (0,0)
+# Wir brauchen genügend Punkte für eine gute Genauigkeit
+phi = np.linspace(0, 2 * np.pi, 1000) 
+circle_points = np.vstack([np.cos(phi), np.sin(phi)])
+
+# 2. Transformationsmatrix aus den sortierten Werten erstellen und anwenden
+# eigenvektoren sind bereits sortiert, halbachsen auch.
+# halbachsen[0] ist die kurze, halbachsen[1] die lange Achse.
+ellipse_transform = eigenvektoren @ np.diag(halbachsen)
+ellipse_points_centered = ellipse_transform @ circle_points
+
+# 3. Finde die maximale absolute Koordinate entlang jeder Achse
+# Das entspricht der halben Breite/Höhe der Bounding Box der Ellipse.
+max_a = np.max(np.abs(ellipse_points_centered[0, :]))
+max_b = np.max(np.abs(ellipse_points_centered[1, :]))
+
+# 4. Die "Worst-Case Abweichung" ist einfach die längste Halbachse.
+# Da die "halbachsen" sortiert sind (von kurz nach lang), ist es der letzte Wert.
+worst_case_deviation = halbachsen[-1]
 
 
+print("\n--- Abgeleitete Metriken für die Speicherung ---")
+print(f"Maximale Ausdehnung in a (x-Richtung der Bounding Box): {max_a:.4f}")
+print(f"Maximale Ausdehnung in b (y-Richtung der Bounding Box): {max_b:.4f}")
+print(f"Worst-Case Abweichung (längste Halbachse): {worst_case_deviation:.4f}")
+print("------------------------------------------------\n")
 
 
+#----------------------------------------------
+#delta Vergleich (Speichern der Daten)
+#----------------------------------------------
+
+script_ordner = os.path.dirname(os.path.abspath(__file__))
+
+
+basis_ordner = "delta_ab"
+unter_ordner = "ellipse_data_uniform"
+voller_ordner = os.path.join(script_ordner, basis_ordner, unter_ordner)
+
+os.makedirs(voller_ordner, exist_ok=True) 
+
+
+pfad = os.path.join(voller_ordner, "set_memb_abmax_data.npz")
+
+
+if os.path.exists(pfad):
+    try:
+        
+        data = np.load(pfad)["set_memb_abmax_data"]
+    except (IOError, KeyError):
+        print(f"Warnung: Datei '{pfad}' war fehlerhaft. Es wird ein neues leeres Datenarray erstellt.")
+        data = np.empty((4, 0))
+else:
+    
+    data = np.empty((4, 0))
+
+
+# Der Wert T muss aus dem oberen Teil deines Skripts bekannt sein
+# Falls T nicht existiert, ersetze es hier durch die korrekte Variable
+neue_spalte = np.array([[max_a], [max_b], [worst_case_deviation], [T]])
+data = np.hstack((data, neue_spalte))
+
+sortier_indizes = np.argsort(data[3, :])
+data = data[:, sortier_indizes]
+np.savez(pfad, set_memb_abmax_data=data)
+
+print("Daten erfolgreich gespeichert!")
+print(f"Pfad: '{pfad}'")
+print("Aktuelle Daten im Array:\n", data)

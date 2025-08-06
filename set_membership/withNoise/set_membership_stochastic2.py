@@ -10,7 +10,9 @@ from rsome import cpt_solver as cpt
 import rsome as rso
 
 #Number of datasamples used (T+1)
-T = 200
+T = 400
+sample_size = 700
+
 
 data_folder = r"C:\Users\benno\Desktop\Simulations\Data\generated_data"
 
@@ -39,12 +41,12 @@ X_minus = X[:, 0:T]
 
 
 
-A_min = 0.25
-A_max = 0.35
-B_min = 0.75
-B_max = 0.85
+A_min = 0.49
+A_max = 0.51
+B_min = 0.49
+B_max = 0.51
 
-sample_size = 500
+
 
 #Noisemodel
 k       = 2          # Freiheitsgrade
@@ -55,14 +57,14 @@ c_delta = chi2.ppf(1-delta, df=k)
 print("c_delta:", c_delta)
 w_max = 0.01  
 sigma_quadrat = (w_max**2) / 3
-
+sigma_w = np.sqrt(sigma_quadrat)
 
 
 z = 1.96 #Z-Quantil für 1-delta = 0.95
-a = w_max
-sigma_w = a / z
+# a = w_max
+# sigma_w = a / z
 
-sigma_quadrat = sigma_w**2
+# sigma_quadrat = sigma_w**2
 
 
 sigma_x2 = np.mean(X**2)
@@ -210,7 +212,7 @@ ordner_name = "results"
 os.makedirs(ordner_name, exist_ok=True)
 
 
-dateiname = "simulation_ergebnis_3.npz"
+dateiname = "simulation_ergebnis_1.npz"
 voller_pfad = os.path.join(ordner_name, dateiname)
 
 
@@ -222,7 +224,83 @@ np.savez(voller_pfad,
 print(f"Ergebnisse in '{voller_pfad}' gespeichert.")
 
 
+#
+#---------------------------------------------------------------------------------------------------------------------------
+#
 
+#----------------------------------------------
+# Bestimmung von max_a, max_b und Worst-Case
+#----------------------------------------------
+
+# 1. Generiere Punkte der Ellipse relativ zum Zentrum (0,0)
+# Wir brauchen genügend Punkte für eine gute Genauigkeit
+phi = np.linspace(0, 2 * np.pi, 1000) 
+circle_points = np.vstack([np.cos(phi), np.sin(phi)])
+
+# 2. Transformationsmatrix aus den sortierten Werten erstellen und anwenden
+# eigenvektoren sind bereits sortiert, halbachsen auch.
+# halbachsen[0] ist die kurze, halbachsen[1] die lange Achse.
+ellipse_transform = eigenvektoren @ np.diag(halbachsen)
+ellipse_points_centered = ellipse_transform @ circle_points
+
+# 3. Finde die maximale absolute Koordinate entlang jeder Achse
+# Das entspricht der halben Breite/Höhe der Bounding Box der Ellipse.
+max_a = np.max(np.abs(ellipse_points_centered[0, :]))
+max_b = np.max(np.abs(ellipse_points_centered[1, :]))
+
+# 4. Die "Worst-Case Abweichung" ist einfach die längste Halbachse.
+# Da die "halbachsen" sortiert sind (von kurz nach lang), ist es der letzte Wert.
+worst_case_deviation = halbachsen[-1]
+
+
+print("\n--- Abgeleitete Metriken für die Speicherung ---")
+print(f"Maximale Ausdehnung in a (x-Richtung der Bounding Box): {max_a:.4f}")
+print(f"Maximale Ausdehnung in b (y-Richtung der Bounding Box): {max_b:.4f}")
+print(f"Worst-Case Abweichung (längste Halbachse): {worst_case_deviation:.4f}")
+print("------------------------------------------------\n")
+
+
+#----------------------------------------------
+#delta Vergleich (Speichern der Daten)
+#----------------------------------------------
+
+script_ordner = os.path.dirname(os.path.abspath(__file__))
+
+
+basis_ordner = "delta_ab"
+unter_ordner = "ellipse_data_uniform"
+voller_ordner = os.path.join(script_ordner, basis_ordner, unter_ordner)
+
+os.makedirs(voller_ordner, exist_ok=True) 
+
+
+pfad = os.path.join(voller_ordner, "set_memb_abmax_data.npz")
+
+
+if os.path.exists(pfad):
+    try:
+        
+        data = np.load(pfad)["set_memb_abmax_data"]
+    except (IOError, KeyError):
+        print(f"Warnung: Datei '{pfad}' war fehlerhaft. Es wird ein neues leeres Datenarray erstellt.")
+        data = np.empty((4, 0))
+else:
+    
+    data = np.empty((4, 0))
+
+
+# Der Wert T muss aus dem oberen Teil deines Skripts bekannt sein
+# Falls T nicht existiert, ersetze es hier durch die korrekte Variable
+neue_spalte = np.array([[max_a], [max_b], [worst_case_deviation], [T]])
+data = np.hstack((data, neue_spalte))
+
+sortier_indizes = np.argsort(data[3, :])
+data = data[:, sortier_indizes]
+np.savez(pfad, set_memb_abmax_data=data)
+
+print("Daten erfolgreich gespeichert!")
+print(f"Pfad: '{pfad}'")
+print("Aktuelle Daten im Array:\n", data)
 
 
 

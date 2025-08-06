@@ -1,7 +1,0 @@
-setup.py
-Functions/__init__.py
-Functions/ellipsis.py
-simulations_functions.egg-info/PKG-INFO
-simulations_functions.egg-info/SOURCES.txt
-simulations_functions.egg-info/dependency_links.txt
-simulations_functions.egg-info/top_level.txt

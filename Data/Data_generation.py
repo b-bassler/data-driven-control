@@ -3,8 +3,8 @@ import os
 
 np.random.seed(0)
 
-a = 0.3
-b = 0.8
+a = 0.5
+b = 0.5
 x0 = np.random.rand(1)
 T = 1000 #Anzahl der Zeitschritte
 u = np.random.rand(1, T)  # 2) Zufällige Eingangssignale zwischen 0 und 1

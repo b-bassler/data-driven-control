@@ -26,7 +26,7 @@ print("sigma_w_quadrat:", sigma_w_quadrat)
 
 
 
-T = 40 #trajectory length
+T = 100 #trajectory length
 N = 1 #fixed at 1
 
 X = state_data[0:1, 0:T]
@@ -153,6 +153,78 @@ plt.grid(True)
 plt.axis('equal') 
 
 plt.show()
+
+# --- 3. ZUWEISUNG DER VARIABLEN FÜR DIE SPEICHERUNG ---
+
+# Zentrum der Ellipse als Liste oder Array definieren
+zentrum = [A_est, B_est]
+
+# Halbachsenlängen in einer Liste oder einem Array zusammenfassen
+# Es ist sinnvoll, sie der Größe nach zu sortieren (größte zuerst)
+halbachsen = sorted([L1, L2], reverse=True)
+
+# Den Winkel von Radiant in Grad umrechnen
+winkel_grad = np.degrees(alpha)
+
+# Die Variable für den Flächeninhalt zuweisen
+flaecheninhalt = area
+
+print("\n--- Ellipsen-Eigenschaften ---")
+print(f"Zentrum (x, y): ({zentrum[0]:.5f}, {zentrum[1]:.5f})")
+print(f"Länge der Halbachsen: {halbachsen[0]:.5f} und {halbachsen[1]:.5f}")
+print(f"Rotation der Hauptachse: {winkel_grad:.5f}°")
+print(f"Flächeninhalt: {flaecheninhalt:.7f}")
+print("----------------------------\n")
+
+
+
+ordner_name = "results"
+
+
+os.makedirs(ordner_name, exist_ok=True)
+
+
+dateiname = "simulation_ergebnis_1.npz"
+voller_pfad = os.path.join(ordner_name, dateiname)
+
+
+np.savez(voller_pfad, 
+          zentrum=zentrum, 
+           halbachsen=halbachsen, 
+            winkel_grad=winkel_grad)
+
+print(f"Ergebnisse in '{voller_pfad}' gespeichert.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 script_ordner = os.path.dirname(os.path.abspath(__file__))

@@ -27,7 +27,7 @@ print(f"{len(dateiliste)} Ergebnis-Dateien gefunden. Beginne mit dem Plotten..."
 
 
 
-labels = ["Uniform", "normally distributed, same variance","normally distributed, same interval", "Seed 4", "without noise","without noise2", "without noise3"]
+labels = ["trajectory bounds Tsiamis", "i.i.d. bounds Dean","normally distributed, same interval", "Seed 4", "without noise","without noise2", "without noise3"]
 
 
 
@@ -65,6 +65,6 @@ ax.legend(fontsize=11)
 ax.set_xlabel(r'$A$', fontsize=14)
 ax.set_ylabel(r'$B$', fontsize=14)
 ax.set_title('set-membership uniform noise ', fontsize=16, pad=20)
-#plt.scatter(0.3, 0.8, c="red", marker="x", s=100, label="(A=0.3, B=0.8)", zorder=2)
+plt.scatter(0.5, 0.5, c="red", marker="x", s=100, label="(A = B = 0.5)", zorder=2)
 plt.tight_layout() 
 plt.show()
