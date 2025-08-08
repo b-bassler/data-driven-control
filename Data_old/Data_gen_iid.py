@@ -2,7 +2,7 @@ import numpy as np
 import os
 
 np.random.seed(0)
-
+    
 a = 0.5
 b = 0.5
 x0 = 0

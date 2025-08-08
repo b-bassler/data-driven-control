@@ -3,18 +3,20 @@ import os
 import matplotlib.pyplot as plt
 np.random.seed(1)
 
+seed = 1
+rng = np.random.default_rng(seed)
+
 a = 0.5
 b = 0.5
-x0 = np.random.rand(1)
+x0 = 0
 T = 100000 #Anzahl der Zeitschritte
-u = np.random.rand(1, T)  # 2) Zufällige Eingangssignale zwischen 0 und 1
+u = input_signal = rng.standard_normal((1, T))  # 2) Zufällige Eingangssignale zwischen 0 und 1
 
 
 A = np.array([[a]])  
 B = np.array([[b]])
-a = 0.01 #Intervallgröße
-w = np.random.uniform(-a, a, (1, T))  # 1) Zufällige Störungen im Bereich [-0.01, 0.01]
-
+k = 0.01 #Intervallgröße
+w = rng.uniform(-k, k, (1, T))
 
 x = np.zeros((1, T+1))    #leeren Zustandsvektor x erzeugen, mit Anfangsbedingung x0
 x[:, 0] = x0
