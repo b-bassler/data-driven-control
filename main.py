@@ -1,40 +1,39 @@
-import os
-from src.data_generation import generate_time_series_data
+import argparse
 
-# --- 1. Define Project Paths (Portable and Robust) ---
-# This part ensures that the script will work on any computer without
-# needing to change the paths manually.
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
+from experiments.run_data_dependent_bounds import run_data_dependent_bounds_experiment
+from experiments.run_bootstrap_dean import run_bootstrap_dean_experiment
 
 
-# --- 2. Define the "Comparison Run" Experiment ---
-def run_uniform_generation_for_comparison():
+
+
+def main():
     """
-    Generates a dataset with parameters that are now identical 
-    to the updated old uniform script for verification.
+    Main entry point for all experiments.
+    Parses command-line arguments and calls the corresponding experiment function.
     """
-    print("--- Starting Comparison Run for 'uniform' data generation ---")
+    parser = argparse.ArgumentParser(
+        description="Run simulation and analysis experiments for the bachelor thesis."
+    )
+    
+    
+    parser.add_argument(
+        "experiment", 
+        choices=['dd-bounds', 'bootstrap-dean'], # Unsere zwei verfügbaren Experimente
+        help="The name of the experiment to run."
+    )
+    
 
-    # This configuration dictionary exactly mimics the parameters of your updated old script.
-    # We don't need to specify initial_state_config or input_config,
-    # because the default behavior of our function now matches the script.
-    comparison_config = {
-        'system_params': {'a': 0.5, 'b': 0.5},
-        'timesteps': 100000,
-        'output_path': GENERATED_DATA_DIR,
-        'base_filename': 'uniform_run_1', # A clear name for the output
-        'noise_config': {'distribution': 'uniform', 'level': 0.01},
-        'seed': 1
-    }
+    args = parser.parse_args()
 
-    # Call our generation function with the defined configuration
-    generate_time_series_data(**comparison_config)
+    # Die Weiche: Rufe die passende Funktion basierend auf dem Argument auf
+    print(f"--- Starting experiment: '{args.experiment}' ---")
+    if args.experiment == 'dd-bounds':
+        run_data_dependent_bounds_experiment()
+    elif args.experiment == 'bootstrap-dean':
+        run_bootstrap_dean_experiment()
+    else:
+        # Dieser Fall sollte durch 'choices' eigentlich nie eintreten
+        print(f"Error: Unknown experiment '{args.experiment}'")
 
-    print("\n--- Comparison data generated successfully! ---")
-    print("You can now run the verify.py script.")
-
-
-# --- 3. Script Entry Point ---
 if __name__ == "__main__":
-    run_uniform_generation_for_comparison()
+    main()
