@@ -1,9 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple
-import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Rectangle 
-
+import pandas as pd
+from typing import List, Dict
 
 def plot_confidence_ellipse_from_matrix(
     true_params: Tuple[float, float],
@@ -145,3 +145,179 @@ def plot_bootstrap_rectangle(
     plt.close(fig)  # Close the figure to free up memory
     
     print(f"Bootstrap plot saved to: {output_path}")
+
+
+
+
+
+
+
+
+#---------------------------------------------------------------------------------------
+
+
+
+def plot_metric_comparison(
+    dataframe: pd.DataFrame,
+    metric_name: str,
+    y_label: str,
+    title: str,
+    output_path: str
+) -> None:
+    """
+    Plots a comparison of a given metric for the ellipse and rectangle methods.
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    ax.plot(dataframe['T'], dataframe[f'ellipse_{metric_name}'], marker='o', linestyle='-', label='Data-Dependent (Ellipse)')
+    ax.plot(dataframe['T'], dataframe[f'rect_{metric_name}'], marker='x', linestyle='--', label='Bootstrap (Rectangle)')
+
+    ax.set_xlabel("Number of Data Points (T)")
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.set_yscale('log') # Log scale often helps to see the trend better
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Comparison plot saved to: {output_path}")    
+
+
+
+def plot_metric_trend(
+    dataframe: pd.DataFrame,
+    metric_name: str,
+    y_label: str,
+    title: str,
+    output_path: str
+) -> None:
+    """
+    Plots the trend of a single metric over T from a results DataFrame.
+    
+    This is used to visualize the results of a single method's analysis run.
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    # Plot the specified metric against the 'T' column
+    ax.plot(dataframe['T'], dataframe[metric_name], marker='o', linestyle='-')
+
+    ax.set_xlabel("Number of Data Points (T)")
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.legend([metric_name.replace("_", " ").title()]) # Creates a clean legend, e.g., "Set Membership Area"
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.set_yscale('log') # Logarithmic scale is often helpful for these metrics
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Trend plot saved to: {output_path}")
+
+
+
+
+
+def plot_multi_metric_comparison(
+    dataframe: pd.DataFrame,
+    metric_configs: List[Dict[str, str]],
+    x_col: str,
+    y_label: str,
+    title: str,
+    output_path: str
+) -> None:
+    """
+    Plots a comparison of multiple metrics from a DataFrame on a single graph.
+    
+    This function is highly flexible and plots lines based on a configuration list,
+    allowing it to compare any number of methods.
+
+    Args:
+        dataframe (pd.DataFrame): The DataFrame containing all the results.
+        metric_configs (List[Dict[str, str]]): A list of dictionaries, where each dict
+            configures one line on the plot. 
+            Required keys: 'col' (column name in DataFrame), 'label' (legend name).
+            Optional keys: 'marker', 'linestyle'.
+        x_col (str): The name of the column to use for the x-axis (e.g., 'T').
+        y_label (str): The label for the y-axis.
+        title (str): The title of the plot.
+        output_path (str): The full path to save the plot image.
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    # Loop through the configuration and plot each specified metric
+    for config in metric_configs:
+        # Check if the column exists in the DataFrame to prevent errors
+        if config['col'] in dataframe.columns:
+            ax.plot(dataframe[x_col], dataframe[config['col']], 
+                    marker=config.get('marker', None), 
+                    linestyle=config.get('linestyle', '-'), 
+                    label=config['label'],
+                    color=config.get('color', None))
+        else:
+            print(f"Warning: Column '{config['col']}' not found in DataFrame. Skipping plot.")
+
+    ax.set_xlabel("Number of Data Points (T)")
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.set_yscale('log') # Logarithmic scale is often best for comparing these metrics
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Multi-metric comparison plot saved to: {output_path}")
+
+
+
+
+def plot_mc_metric_comparison(
+    summary_df: pd.DataFrame,
+    metric_configs: List[Dict[str, str]],
+    x_col_name: str,
+    y_label: str,
+    title: str,
+    output_path: str
+) -> None:
+    """
+    Plots the mean of metrics from a Monte Carlo summary DataFrame, 
+    including a shaded area for +/- one standard deviation, based on a config list.
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+    
+    # The x-axis is the index of the summary DataFrame, which is 'T'
+    x_values = summary_df.index
+
+    for config in metric_configs:
+        # Construct the multi-index column names for mean and std
+        mean_col = (config['col'], 'mean')
+        std_col = (config['col'], 'std')
+
+        # Check if the columns exist in the DataFrame
+        if mean_col in summary_df.columns and std_col in summary_df.columns:
+            mean_values = summary_df[mean_col]
+            std_values = summary_df[std_col]
+            
+            # Plot the mean line
+            ax.plot(x_values, mean_values, 
+                    label=config['label'], 
+                    color=config.get('color', None), 
+                    marker=config.get('marker', None), 
+                    linestyle=config.get('linestyle', '-'))
+            
+            # Add the shaded confidence band (+/- 1 std)
+            ax.fill_between(x_values, mean_values - std_values, mean_values + std_values,
+                            color=config.get('color', 'gray'), alpha=0.2)
+        else:
+            print(f"Warning: Columns for '{config['col']}' not found in summary DataFrame. Skipping plot line.")
+
+
+    ax.set_xlabel(f"Number of Data Points ({x_col_name})")
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.set_yscale('log')
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Monte Carlo plot saved to: {output_path}")

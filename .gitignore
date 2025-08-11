@@ -7,15 +7,15 @@ __pycache__/
 # ===============================================
 # Projekt-spezifische Ordner, die ignoriert werden
 # ===============================================
-# Generierte Daten sollen nie in Git landen
+
 data/generated/
 
-# Auch finale Ergebnisse wie Plots und Tabellen nicht
+# Plots und Tabellen
 results/
 
 
 # ================================================================
-# Archivierte Ordner, die als Backup behalten, aber ignoriert werden
+# Archivierte Ordner
 # ================================================================
 Data_old/
 analysis_old/
@@ -29,3 +29,7 @@ results_old/
 
 #venv ignorieren
 .venv/
+
+old/
+
+verify.py/

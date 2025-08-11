@@ -97,7 +97,7 @@ def _simulate_system(
     rng: np.random.Generator
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    (Internal helper) Simulates a linear system. Uses a provided RNG.
+    Simulates a linear system to create synthetic data. Uses a provided RNG.
     """
     u = rng.normal(0, sigma_u, (N, T))
     w = rng.normal(0, sigma_w, (N, T))
@@ -136,7 +136,7 @@ def perform_bootstrap_analysis(
     error_B_list = []
 
     print(f"\nStarting bootstrap process with {M} iterations...")
-    for _ in tqdm(range(M), desc="Bootstrap Progress"):
+    for _ in range(M):
         # Generate synthetic data based on the initial estimate
         x_synthetic, u_synthetic = _simulate_system(A_hat, B_hat, T_real, N_real, sigma_u, sigma_w, rng)
         

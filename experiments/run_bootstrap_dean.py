@@ -1,42 +1,48 @@
+"""
+Experiment script for the Bootstrap Dean method.
+
+This script performs a single run of the experiment:
+1. Generates the required time-series data.
+2. Performs an initial estimation on this data.
+3. Runs the bootstrap analysis loop to find confidence bounds (epsilons).
+4. Analyzes the resulting confidence rectangle using the OOP class.
+5. Saves the results and generates a plot.
+"""
+
 import os
 import numpy as np
 
-
+# --- 1. Import all required tools from the src library ---
 from src.data_generation import generate_time_series_data
 from src.system_identification import estimate_least_squares_timeseries, perform_bootstrap_analysis
 from src.plotting import plot_bootstrap_rectangle
+from src.analysis import ConfidenceRectangle
 
-
+# --- 2. Define project paths relative to the project root ---
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
 
 def run_bootstrap_dean_experiment():
-    """
-    Orchestrates the full Bootstrap Dean experiment:
-    1. Generates the required time-series data.
-    2. Performs an initial estimation.
-    3. Runs the bootstrap analysis.
-    4. Saves results and visualizes them.
-    """
+    """Orchestrates the full Bootstrap Dean experiment."""
     print("--- Starting Bootstrap Dean Experiment ---")
 
-    # ------Configuration
+    # === 3. Central configuration for the entire experiment ===
     T_DATA_POINTS_TO_USE = 400
     TRUE_PARAMS = (0.5, 0.5)  # (a_true, b_true)
     
-    # data config
-    DATA_SEED = 42
-    SIGMA_W = 0.0115 
+    # Configuration for data generation
+    DATA_SEED = 1
+    SIGMA_W = 0.01 
     SIGMA_U = 1.0
     
-    # Bootstrap config
+    # Configuration for the bootstrap analysis
     BOOTSTRAP_ITERATIONS = 2000
     CONFIDENCE_DELTA = 0.05
     BOOTSTRAP_SEED = 123
     
-    # === 4. Daten generieren ===
+    # === 4. Generate time-series data ===
     print(f"\nStep 1: Generating time-series data with T={T_DATA_POINTS_TO_USE}...")
     generation_config = {
         'system_params': {'a': TRUE_PARAMS[0], 'b': TRUE_PARAMS[1]},
@@ -47,17 +53,18 @@ def run_bootstrap_dean_experiment():
         'seed': DATA_SEED
     }
     state_data_raw, input_data_raw, _ = generate_time_series_data(**generation_config)
-    # Unsere LS-Funktion erwartet die Form (N, T), also fügen wir eine Dimension für N=1 hinzu
+    # Reshape to (N, T) format for the estimator, where N=1
     state_data = np.array([state_data_raw.flatten()])
     input_data = np.array([input_data_raw.flatten()])
 
-    # === 5. Initiale Schätzung durchführen ===
+    # === 5. Perform initial least-squares estimation ===
     print("\nStep 2: Performing initial LS estimation...")
     A_hat, B_hat = estimate_least_squares_timeseries(state_data, input_data)
     initial_estimate = (A_hat, B_hat)
-    print(f"-> Initial estimate: A_hat = {A_hat.item():.6f}, B_hat = {B_hat.item():.6f}")
+    estimated_params = (A_hat.item(), B_hat.item())
+    print(f"-> Initial estimate: A_hat = {estimated_params[0]:.6f}, B_hat = {estimated_params[1]:.6f}")
     
-    # === 6. Bootstrap-Analyse durchführen ===
+    # === 6. Perform bootstrap analysis ===
     bootstrap_results = perform_bootstrap_analysis(
         initial_estimate=initial_estimate,
         data_shape=(state_data.shape[0], T_DATA_POINTS_TO_USE), # (N, T)
@@ -66,39 +73,49 @@ def run_bootstrap_dean_experiment():
         delta=CONFIDENCE_DELTA,
         seed=BOOTSTRAP_SEED
     )
-    print(f"-> Bootstrap analysis complete.")
-    print(f"-> Epsilon A: {bootstrap_results['epsilon_A']:.6f}, Epsilon B: {bootstrap_results['epsilon_B']:.6f}")
+    epsilons = (bootstrap_results['epsilon_A'], bootstrap_results['epsilon_B'])
+    print(f"-> Bootstrap analysis complete. Epsilon A: {epsilons[0]:.6f}, Epsilon B: {epsilons[1]:.6f}")
 
-    # === 7. Ergebnisse speichern ===
-    print("\nStep 3: Saving results...")
-    output_filename = f"bootstrap_dean_T{T_DATA_POINTS_TO_USE}_M{BOOTSTRAP_ITERATIONS}.npz"
+    # === 7. Analyze results using the ConfidenceRectangle class ===
+    print("\nStep 3: Analyzing results with ConfidenceRectangle class...")
+    rect = ConfidenceRectangle(center=estimated_params, epsilons=epsilons)
+    area = rect.area()
+    wcd = rect.worst_case_deviation()
+    devs = rect.axis_parallel_deviations()
+
+    print(f"-> Area: {area:.6f}")
+    print(f"-> Worst-Case Deviation: {wcd:.6f}")
+    print(f"-> Axis-Parallel Deviations: a={devs['max_dev_a']:.6f}, b={devs['max_dev_b']:.6f}")
+
+    # === 8. Save the calculated metrics in a consistent format ===
+    print("\nStep 4: Saving analysis results...")
+    output_filename = f"bootstrap_dean_metrics_T{T_DATA_POINTS_TO_USE}_M{BOOTSTRAP_ITERATIONS}.npz"
     output_path = os.path.join(RESULTS_DIR, output_filename)
-    
     np.savez(
         output_path,
-        a_hat=A_hat.item(),
-        b_hat=B_hat.item(),
-        epsilon_A=bootstrap_results['epsilon_A'],
-        epsilon_B=bootstrap_results['epsilon_B'],
+        a_hat=estimated_params[0],
+        b_hat=estimated_params[1],
+        area=area,
+        worst_case_deviation=wcd,
+        max_dev_a=devs['max_dev_a'],
+        max_dev_b=devs['max_dev_b'],
         T=T_DATA_POINTS_TO_USE,
-        M=BOOTSTRAP_ITERATIONS,
-        delta=CONFIDENCE_DELTA
+        M=BOOTSTRAP_ITERATIONS
     )
-    print(f"-> Results saved to {output_path}")
+    print(f"-> Metrics saved to {output_path}")
 
-    # === 8. Visualisierung ===
-    print("\nStep 4: Generating plot...")
+    # === 9. Generate visualization ===
+    print("\nStep 5: Generating plot...")
     figures_dir = os.path.join(RESULTS_DIR, "figures")
     os.makedirs(figures_dir, exist_ok=True)
     plot_path = os.path.join(figures_dir, "bootstrap_dean_confidence_region.png")
 
     plot_bootstrap_rectangle(
         true_params=TRUE_PARAMS,
-        estimated_params=(A_hat.item(), B_hat.item()),
-        epsilons=(bootstrap_results['epsilon_A'], bootstrap_results['epsilon_B']),
+        estimated_params=estimated_params,
+        epsilons=epsilons,
         confidence_delta=CONFIDENCE_DELTA,
         output_path=plot_path
     )
 
     print("\n--- Bootstrap Dean Experiment Finished ---")
-
