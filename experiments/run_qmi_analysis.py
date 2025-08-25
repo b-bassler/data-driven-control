@@ -11,7 +11,7 @@ from scipy.stats import chi2
 from src.data_generation import generate_time_series_data
 from src.set_membership import calculate_ellipse_from_qmi
 from src.analysis import ConfidenceEllipse
-from src.plotting import plot_qmi_ellipse # The new, specific plotter for this ellipse
+from src.plotting import plot_qmi_ellipse 
 
 # --- 2. Define project paths ---
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -24,7 +24,7 @@ def run_qmi_analysis_experiment():
     """
     print("--- Starting Single Run: QMI-based Ellipse Analysis ---")
 
-    # === 3. Central Configuration for this specific run ===
+    # === 3. Central Configuration for this specific run 
     T = 50  # The number of data points to use for this run
     DATA_SEED = 2025
     
@@ -33,7 +33,7 @@ def run_qmi_analysis_experiment():
     CONFIDENCE_DELTA = 0.05
     DEGREES_OF_FREEDOM = 2
 
-    # === 4. Generate the dataset for this run ===
+    # === 4. Generate the dataset for this run
     print(f"\nStep 1: Generating time-series data with T={T}...")
     state_data, input_data, _ = generate_time_series_data(
         system_params=TRUE_PARAMS, timesteps=T,
@@ -48,7 +48,7 @@ def run_qmi_analysis_experiment():
     X_minus = state_data[:, 0:T]
     U_minus = input_data[:, 0:T]
 
-    # === 5. Calculate the QMI Ellipse directly ===
+    # === 5. Calculate the QMI Ellipse directly 
     print("\nStep 2: Calculating ellipse directly from QMI...")
     
     # Pre-calculate the Phi matrix components
@@ -73,8 +73,7 @@ def run_qmi_analysis_experiment():
     
     print("-> Ellipse calculated successfully.")
 
-    # === 6. Analyze Metrics using our ConfidenceEllipse class ===
-    print("\nStep 3: Analyzing ellipse metrics...")
+    # === 6. Analyze Metrics using our ConfidenceEllipse class 
     ellipse = ConfidenceEllipse(
         center=qmi_results['center'], 
         p_matrix=qmi_results['shape_matrix']
@@ -92,13 +91,13 @@ def run_qmi_analysis_experiment():
     for key, value in metrics.items():
         print(f"  - {key}: {value:.5f}")
 
-    # === 7. Save the results of this single run ===
+    # === 7. Save the results of this single run 
     print("\nStep 4: Saving results and plot...")
     results_path = os.path.join(RESULTS_DIR, f"qmi_ellipse_results_T{T}.npz")
     np.savez(results_path, **metrics)
     print(f"-> Metrics saved to: {results_path}")
 
-    # === 8. Generate a plot of the resulting ellipse ===
+    # === 8. Generate a plot of the resulting ellipse
     figures_dir = os.path.join(RESULTS_DIR, "figures", "qmi_ellipse")
     os.makedirs(figures_dir, exist_ok=True)
     plot_path = os.path.join(figures_dir, f"qmi_ellipse_T{T}.png")

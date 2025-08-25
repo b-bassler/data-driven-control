@@ -34,7 +34,7 @@ def run_bootstrap_dean_experiment():
     
     # Configuration for data generation
     DATA_SEED = 2
-    SIGMA_W = 0.01 
+    SIGMA_W = np.sqrt((0.01**2) / 3) 
     SIGMA_U = 1.0
     
     # Configuration for the bootstrap analysis

@@ -16,6 +16,9 @@ from experiments.run_sysid_comparison import run_sysid_comparison_experiment
 from experiments.run_final_comparison import run_final_comparison_experiment
 from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_comparison
 from experiments.run_mc_final_comparison import run_monte_carlo_final_comparison
+from experiments.run_coverage_validation import perform_coverage_run
+from experiments.run_coverage_validation_over_T import run_coverage_validation_over_T
+
 
 def main():
     """
@@ -31,7 +34,7 @@ def main():
         "experiment", 
         choices=['dd-bounds', 'bootstrap-dean', 'set-membership', 'qmi-ellipse',
                  'sysid-compare', 'final-comparison', 
-                 'mc-sysid-compare', 'mc-final-compare'], 
+                 'mc-sysid-compare', 'mc-final-compare', 'coverage-test','coverage-over-t'], 
         help="The name of the experiment to run."
     )
     
@@ -78,6 +81,10 @@ def main():
         run_monte_carlo_sysid_comparison(num_mc_runs=args.runs)
     elif args.experiment == 'mc-final-compare':
         run_monte_carlo_final_comparison(num_mc_runs=args.runs)
+    elif args.experiment == 'coverage-test': 
+        perform_coverage_run(T=100, num_mc_runs=args.runs)
+    elif args.experiment == 'coverage-over-t': 
+        run_coverage_validation_over_T()
     else:
         print(f"Error: Unknown experiment '{args.experiment}'")
 

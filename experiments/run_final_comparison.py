@@ -36,7 +36,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     T_MAX = 300
     T_RANGE = np.arange(8, T_MAX + 1, 10)
     
-    TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
+    TRUE_PARAMS = {'a': 0.99, 'b': 0.5}
     NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05

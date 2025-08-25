@@ -14,7 +14,7 @@ from src.plotting import plot_mvee_with_points
 # --- 2. Define project paths ---
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
-GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated') # KORRIGIERT: Fehlende Variable hinzugefügt
+GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated') 
 
 
 def run_set_membership_experiment(): 
@@ -58,9 +58,7 @@ def run_set_membership_experiment():
         print(f"Error: Could not compute Phi matrix for T={T}. Aborting.")
         return
 
-    # =================================================================
-    # === 6. Perform Adaptive Grid Search (KORRIGIERT) ===
-    # =================================================================
+    # === 6. Perform Adaptive Grid Search
     current_a_range, current_b_range = (0.49, 0.51), (0.49, 0.51)
     current_grid_density = INITIAL_GRID_DENSITY
     valid_pairs = np.array([])

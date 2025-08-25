@@ -97,27 +97,18 @@ def analyze_ellipse_geometry(p_matrix: np.ndarray) -> Dict[str, float]:
 #classes for confidence regions
 
 
-import numpy as np
-from typing import Tuple, Dict
-
 class ConfidenceRectangle:
     """
     Represents a rectangular confidence region and calculates its metrics.
     """
     def __init__(self, center: Tuple[float, float], epsilons: Tuple[float, float]):
-        """
-        Initializes the rectangle.
-
-        Args:
-            center (Tuple[float, float]): The center of the rectangle (a_hat, b_hat).
-            epsilons (Tuple[float, float]): The half-widths of the rectangle (epsilon_A, epsilon_B).
-        """
+        """Initializes the rectangle."""
         self.a_hat, self.b_hat = center
         self.epsilon_a, self.epsilon_b = epsilons
+        self.center = np.array(center)
 
     def area(self) -> float:
         """Calculates the total area of the rectangle."""
-        # Full width is 2 * epsilon_a, full height is 2 * epsilon_b
         return (2 * self.epsilon_a) * (2 * self.epsilon_b)
 
     def worst_case_deviation(self) -> float:
@@ -128,62 +119,64 @@ class ConfidenceRectangle:
         """Returns the maximum deviations along each axis."""
         return {"max_dev_a": self.epsilon_a, "max_dev_b": self.epsilon_b}
 
+    def contains(self, point: Tuple[float, float]) -> bool:
+        """
+        Checks if a given point is inside the rectangle.
+        """
+        point_a, point_b = point
+        # The point is inside if the distance from the center along each axis
+        # is less than or equal to the respective epsilon (half-width).
+        return (np.abs(point_a - self.a_hat) <= self.epsilon_a) and \
+               (np.abs(point_b - self.b_hat) <= self.epsilon_b)
+
 
 class ConfidenceEllipse:
     """
-    Represents an elliptical confidence region and calculates its metrics.
+    Represents an elliptical confidence region derived from a shape matrix (P)
+    and calculates its metrics. Works for both DD-Bounds and QMI-Method.
     """
     def __init__(self, center: Tuple[float, float], p_matrix: np.ndarray):
-        """
-        Initializes the ellipse from its center and P-matrix.
-        Performs the expensive eigendecomposition only once upon creation.
-
-        Args:
-            center (Tuple[float, float]): The center of the ellipse (a_hat, b_hat).
-            p_matrix (np.ndarray): The 2x2 shape matrix of the ellipse.
-        """
-        self.center = center
+        """Initializes the ellipse from its center and P-matrix."""
+        self.center = np.array(center)
         self.p_matrix = p_matrix
         
-        # --- Perform expensive calculations once and store them ---
         self._eigenvalues, self._eigenvectors = np.linalg.eig(self.p_matrix)
-        
-        # Semi-axes (half-axes)
-        # Using abs() for numerical stability against tiny negative values
-        self._semi_axis_1 = 1 / np.sqrt(abs(self._eigenvalues[0]))
-        self._semi_axis_2 = 1 / np.sqrt(abs(self._eigenvalues[1]))
-        self.semi_axes = sorted([self._semi_axis_1, self._semi_axis_2], reverse=True)
+        # Semi-axes are the inverse square root of the eigenvalues
+        self.semi_axes = sorted(1 / np.sqrt(np.abs(self._eigenvalues)), reverse=True)
 
     def area(self) -> float:
         """Calculates the total area of the ellipse."""
-        # Area of ellipse is pi * r1 * r2
         return np.pi * self.semi_axes[0] * self.semi_axes[1]
 
     def worst_case_deviation(self) -> float:
         """Returns the worst-case deviation (the longest semi-axis)."""
-        return self.semi_axes[0] # The major semi-axis
+        return self.semi_axes[0]
 
     def axis_parallel_deviations(self) -> Dict[str, float]:
-        """
-        Calculates the maximum deviations along each axis (half the size of the bounding box).
-        """
-        # Generate points on a unit circle
+        """Calculates the maximum deviations along each axis (bounding box)."""
         phi = np.linspace(0, 2 * np.pi, 1000) 
         circle_points = np.vstack([np.cos(phi), np.sin(phi)])
-
-        # Transform points to the final ellipse shape, centered at (0,0)
         ellipse_transform = self._eigenvectors @ np.diag(self.semi_axes)
         ellipse_points_centered = ellipse_transform @ circle_points
-
-        # Find the maximum absolute coordinate along each axis
         max_a = np.max(np.abs(ellipse_points_centered[0, :]))
         max_b = np.max(np.abs(ellipse_points_centered[1, :]))
-
         return {"max_dev_a": max_a, "max_dev_b": max_b}
+
+    def contains(self, point: Tuple[float, float]) -> bool:
+        """
+        Checks if a given point is inside the ellipse.
+        A point theta is inside if (theta - center)^T * P * (theta - center) <= 1.
+        """
+        point_vec = np.array(point)
+        # Ensure vectors are column vectors (shape 2,1) for matrix multiplication
+        diff = (point_vec - self.center).reshape(2, 1)
+        
+        # Calculate the quadratic form
+        value = diff.T @ self.p_matrix @ diff
+        
+        return value.item() <= 1
+
     
-
-
-
 #-------------------------------------------------------------------------------------------------------
 
 
@@ -250,3 +243,9 @@ class MVEEllipse:
         max_b = np.max(np.abs(ellipse_points_centered[1, :]))
 
         return {"max_dev_a": max_a, "max_dev_b": max_b}
+    def contains(self, point: Tuple[float, float]) -> bool:
+        """Checks if a given point is inside the MVEE."""
+        point_vec = np.array(point)
+        diff = (point_vec - self.center.flatten()).reshape(2, 1)
+        value = diff.T @ self._A_shape @ diff
+        return value.item() <= 1

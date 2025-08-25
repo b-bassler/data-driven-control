@@ -416,3 +416,44 @@ def plot_mvee_with_points(
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
     print(f"-> MVEE plot saved to: {output_path}")
+
+
+
+
+
+
+def plot_coverage_trend(
+    dataframe: pd.DataFrame,
+    target_rate: float,
+    output_path: str
+) -> None:
+    """
+    Plots the failure rate of multiple methods over T.
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+    
+    # Define styles for each method
+    styles = {
+        'dd_bounds_failure_rate': {'label': 'Data-Dependent Bounds', 'color': 'blue', 'marker': 'o'},
+        'bootstrap_failure_rate': {'label': 'Bootstrap', 'color': 'orange', 'marker': 'x'},
+        'set_membership_failure_rate': {'label': 'Set Membership ', 'color': 'green', 'marker': 's'}
+    }
+
+    # Plot a horizontal line for the target failure rate
+    ax.axhline(y=target_rate, color='red', linestyle='--', label=f'Target Failure Rate ({target_rate:.0%})')
+
+    for col, style in styles.items():
+        if col in dataframe.columns:
+            ax.plot(dataframe['T'], dataframe[col], **style)
+
+    ax.set_xlabel("Number of Data Points (T)")
+    ax.set_ylabel("Empirical Failure Rate")
+    ax.set_title("Coverage Validation")
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    # Format y-axis as percentage
+    ax.yaxis.set_major_formatter(plt.FuncFormatter('{:.0%}'.format))
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Coverage trend plot saved to: {output_path}")

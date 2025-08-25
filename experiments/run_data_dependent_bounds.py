@@ -28,15 +28,15 @@ def run_data_dependent_bounds_experiment():
 
     # === 3. Central configuration for the entire experiment ===
     N_SAMPLES = 10000
-    DATA_SEED = 1
+    DATA_SEED = 234
     BASE_FILENAME = 'iid_run_for_dd_bounds'
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     NOISE_STD_DEV = np.sqrt((0.01**2) / 3)
     
-    T_DATA_POINTS = 100  # Number of data points to use from the generated set
-    CONFIDENCE_DELTA = 0.05  # Corresponds to 95% confidence
+    T_DATA_POINTS = 10  # Number of data points to use from the generated set
+    CONFIDENCE_DELTA = 0.05  # Corresponds to 1 - delta confidence
 
-    # === 4. Generate I.I.D. data for the experiment ===
+    # 4. Generate I.I.D. data for the experiment
     print(f"\nStep 1: Generating {N_SAMPLES} I.I.D. data samples...")
     generation_config = {
         'N': N_SAMPLES, 'system_params': TRUE_PARAMS,
@@ -47,11 +47,11 @@ def run_data_dependent_bounds_experiment():
     }
     x_samples, u_samples, _, y_samples = generate_iid_samples(**generation_config)
     
-    # === 5. Prepare data subset for analysis ===
+    # 5. Prepare data subset for analysis
     print(f"\nStep 2: Preparing first {T_DATA_POINTS} data points for analysis...")
     x, u, y = x_samples[:T_DATA_POINTS], u_samples[:T_DATA_POINTS], y_samples[:T_DATA_POINTS]
 
-    # === 6. Perform least-squares estimation ===
+    # 6. Perform least-squares estimation 
     print("\nStep 3: Performing least-squares estimation...")
     A_est_mat, B_est_mat = estimate_least_squares_iid(x, u, y)
     if A_est_mat is None:
