@@ -33,14 +33,14 @@ def run_bootstrap_dean_experiment():
     TRUE_PARAMS = (0.5, 0.5)  # (a_true, b_true)
     
     # Configuration for data generation
-    DATA_SEED = 1
+    DATA_SEED = 2
     SIGMA_W = 0.01 
     SIGMA_U = 1.0
     
     # Configuration for the bootstrap analysis
     BOOTSTRAP_ITERATIONS = 2000
     CONFIDENCE_DELTA = 0.05
-    BOOTSTRAP_SEED = 123
+    BOOTSTRAP_SEED = 1
     
     # === 4. Generate time-series data ===
     print(f"\nStep 1: Generating time-series data with T={T_DATA_POINTS_TO_USE}...")
@@ -119,3 +119,4 @@ def run_bootstrap_dean_experiment():
     )
 
     print("\n--- Bootstrap Dean Experiment Finished ---")
+    

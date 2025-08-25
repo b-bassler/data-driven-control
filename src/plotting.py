@@ -321,3 +321,98 @@ def plot_mc_metric_comparison(
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
     print(f"-> Monte Carlo plot saved to: {output_path}")
+
+
+
+
+def plot_qmi_ellipse(
+    true_params: Tuple[float, float],
+    ellipse_center: Tuple[float, float],
+    shape_matrix: np.ndarray,
+    T: int,
+    output_path: str
+) -> None:
+    """Visualizes a single confidence ellipse derived from the QMI method.
+    """
+    eigenvalues, eigenvectors = np.linalg.eig(shape_matrix)
+    semi_axis_1 = 1 / np.sqrt(abs(eigenvalues[0]))
+    semi_axis_2 = 1 / np.sqrt(abs(eigenvalues[1]))
+    phi = np.linspace(0, 2 * np.pi, 100)
+    circle_points = np.vstack([np.cos(phi), np.sin(phi)])
+    
+    ellipse_transform = eigenvectors @ np.diag([semi_axis_1, semi_axis_2])
+    ellipse_points = ellipse_transform @ circle_points
+    ellipse_a = ellipse_points[0, :] + ellipse_center[0]
+    ellipse_b = ellipse_points[1, :] + ellipse_center[1]
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    ax.plot(ellipse_a, ellipse_b, label=f'QMI Feasible Set', color='purple')
+    ax.fill(ellipse_a, ellipse_b, alpha=0.2, color='purple')
+    
+    ax.scatter(*true_params, color='red', marker='x', s=120, zorder=5, label='True Parameters (a, b)')
+    ax.scatter(*ellipse_center, color='darkviolet', marker='+', s=120, zorder=5, label='Ellipse Center (â, b̂)')
+
+    ax.set_title(f'QMI Feasible Set (T = {T})')
+    ax.set_xlabel('Parameter a')
+    ax.set_ylabel('Parameter b')
+    ax.legend()
+    ax.grid(True)
+    ax.axis('equal')
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)  
+    print(f"-> QMI ellipse plot saved to: {output_path}")
+
+
+
+
+def plot_mvee_with_points(
+    feasible_points: np.ndarray,
+    mvee_results: Dict[str, np.ndarray],
+    true_params: Tuple[float, float],
+    T: int,
+    output_path: str
+) -> None:
+    """
+    Plots the Minimum Volume Enclosing Ellipse along with the feasible point set.
+
+    Args:
+        feasible_points (np.ndarray): The cloud of valid (a, b) pairs.
+        mvee_results (Dict[str, np.ndarray]): The result from the rsome solver, containing 'P' and 'c'.
+        true_params (Tuple[float, float]): The true parameters (a_true, b_true).
+        T (int): The number of data points used, for the plot title.
+        output_path (str): The full path to save the plot image.
+    """
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Plot the cloud of feasible points
+    ax.scatter(feasible_points[:, 0], feasible_points[:, 1], 
+               facecolor='none', marker=".", color='gray', label=f'{len(feasible_points)} Feasible Points')
+
+    # Calculate and plot the MVEE ellipse from the solver results
+    P_s = mvee_results['P']
+    c_s = mvee_results['c']
+    
+    t = np.linspace(0, 2 * np.pi, 200)
+    y = np.vstack([np.cos(t), np.sin(t)])
+    
+    # This is the transformation from the rsome result to ellipse points
+    ellipse_points = np.linalg.inv(P_s) @ (y + c_s[:, np.newaxis])
+
+    ax.plot(ellipse_points[0, :], ellipse_points[1, :], color='red', 
+            label='Minimum Volume Enclosing Ellipsoid')
+            
+    # Plot the true parameter value
+    ax.scatter(*true_params, color='black', marker='x', s=120, zorder=5, label='True Parameters (a, b)')
+
+    ax.set_title(f'Set Membership Feasible Set and MVEE (T = {T})')
+    ax.set_xlabel('Parameter a')
+    ax.set_ylabel('Parameter b')
+    ax.legend()
+    ax.grid(True)
+    ax.axis('equal')
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> MVEE plot saved to: {output_path}")

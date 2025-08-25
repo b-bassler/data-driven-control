@@ -94,3 +94,70 @@ def calculate_mvee(
     c_vector_sol = c.get()
     
     return {'P': p_matrix_sol, 'c': c_vector_sol}
+
+
+
+
+
+
+
+#------------------------------------------------------------------------------
+
+
+
+def calculate_ellipse_from_qmi(
+    X_plus: np.ndarray,
+    X_minus: np.ndarray,
+    U_minus: np.ndarray,
+    phi11: np.ndarray,
+    phi12: np.ndarray,
+    phi21: np.ndarray,
+    phi22: np.ndarray
+) -> Optional[Dict[str, np.ndarray]]:
+    """
+    Derives the confidence ellipse directly from the QMI formulation.
+    """
+    Z = np.vstack([X_minus, U_minus])
+
+    # 1. Calculate P, q, r from the general quadratic form: θ'Pθ + q'θ + r >= 0
+    # (as derived on page 2 of "Notes.pdf")
+    P_raw = Z @ phi22 @ Z.T
+    q_raw = -2 * (Z @ phi22.T @ X_plus.T + Z @ phi12.T)
+    r_matrix = X_plus @ phi22 @ X_plus.T + phi12 @ X_plus.T + X_plus @ phi21 + phi11
+    r_raw = r_matrix.item()
+
+  
+    # ================================================================
+    # The standard ellipse derivation (pages 3-4) assumes the form ... <= 0.
+    # We flip the signs of P, q, and r to match this convention.
+    P = -P_raw
+    q = -q_raw
+    r = -r_raw
+    # ================================================================
+
+    # 2. Convert to standard ellipsoid form: (θ - θ_c)ᵀ * A * (θ - θ_c) <= 1
+    try:
+        # Center: θ_c = -0.5 * P⁻¹ * q
+        P_inv = np.linalg.inv(P)
+        center = -0.5 * P_inv @ q
+    except np.linalg.LinAlgError:
+        print("Warning: P-matrix is singular. Cannot calculate ellipse center.")
+        return None
+        
+    # Denominator for the shape matrix A
+    # k = θ_cᵀ * P * θ_c - r
+    k_matrix = center.T @ P @ center - r
+    k = k_matrix.item()
+    
+    if k <= 0:
+        print(f"Warning: Normalization factor k is non-positive (k={k:.4f}). Cannot form standard ellipse.")
+        return None
+        
+    # Shape Matrix: A = P / k
+    shape_matrix = P / k
+    
+    return {
+        'center': center.flatten(),
+        'shape_matrix': shape_matrix
+    }
+

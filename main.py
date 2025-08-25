@@ -1,13 +1,21 @@
 # main.py
 import argparse
+import os
+
+# --- Path Definitions ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RESULTS_DIR = os.path.join(BASE_DIR, 'results')
+DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 # --- Import all available experiment functions ---
 from experiments.run_data_dependent_bounds import run_data_dependent_bounds_experiment
 from experiments.run_bootstrap_dean import run_bootstrap_dean_experiment
-from experiments.run_set_membership import run_set_membership_experiment_over_T
-from experiments.run_final_comparison import run_final_comparison_experiment
+from experiments.run_set_membership import run_set_membership_experiment
+from experiments.run_qmi_analysis import run_qmi_analysis_experiment
 from experiments.run_sysid_comparison import run_sysid_comparison_experiment
-from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_comparison # <-- Der wichtige Import
+from experiments.run_final_comparison import run_final_comparison_experiment
+from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_comparison
+from experiments.run_mc_final_comparison import run_monte_carlo_final_comparison
 
 def main():
     """
@@ -21,8 +29,9 @@ def main():
     # Define the main argument that selects the experiment
     parser.add_argument(
         "experiment", 
-        choices=['dd-bounds', 'bootstrap-dean', 'set-membership', 
-                 'final-comparison', 'sysid-compare', 'mc-sysid-compare'], # <-- Die wichtige Ergänzung in der Liste
+        choices=['dd-bounds', 'bootstrap-dean', 'set-membership', 'qmi-ellipse',
+                 'sysid-compare', 'final-comparison', 
+                 'mc-sysid-compare', 'mc-final-compare'], 
         help="The name of the experiment to run."
     )
     
@@ -31,28 +40,45 @@ def main():
         "--runs", 
         type=int, 
         default=10, 
-        help="Number of Monte Carlo runs to perform (used by 'mc-sysid-compare')."
+        help="Number of Monte Carlo runs to perform."
     )
 
     args = parser.parse_args()
 
-    # Dispatcher: Call the correct function based on the user's choice
-    print(f"--- Starting experiment: '{args.experiment}' ---")
+    # --- Directory Setup ---
+    print("--- Ensuring all output directories exist... ---")
+    required_dirs = [
+        os.path.join(DATA_DIR, "generated"),
+        os.path.join(RESULTS_DIR, "figures", "final_comparison"),
+        os.path.join(RESULTS_DIR, "figures", "mc_sysid_comparison"),
+        os.path.join(RESULTS_DIR, "figures", "mc_final_comparison"),
+        os.path.join(RESULTS_DIR, "figures", "set_membership"),
+        os.path.join(RESULTS_DIR, "figures", "sysid_comparison"),
+        os.path.join(RESULTS_DIR, "figures", "qmi_ellipse"),
+    ]
+    for dir_path in required_dirs:
+        os.makedirs(dir_path, exist_ok=True)
+
+    # --- Dispatcher: Call the correct function based on the user's choice ---
+    print(f"\n--- Starting experiment: '{args.experiment}' ---")
     
     if args.experiment == 'dd-bounds':
         run_data_dependent_bounds_experiment()
     elif args.experiment == 'bootstrap-dean':
         run_bootstrap_dean_experiment()
     elif args.experiment == 'set-membership':
-        run_set_membership_experiment_over_T()
-    elif args.experiment == 'final-comparison':
-        run_final_comparison_experiment()
+        run_set_membership_experiment()
+    elif args.experiment == 'qmi-ellipse':
+        run_qmi_analysis_experiment()
     elif args.experiment == 'sysid-compare':
         run_sysid_comparison_experiment(data_seed=0)
-    elif args.experiment == 'mc-sysid-compare': # <-- Der wichtige neue Block
+    elif args.experiment == 'final-comparison':
+        run_final_comparison_experiment(data_seed=0)
+    elif args.experiment == 'mc-sysid-compare':
         run_monte_carlo_sysid_comparison(num_mc_runs=args.runs)
+    elif args.experiment == 'mc-final-compare':
+        run_monte_carlo_final_comparison(num_mc_runs=args.runs)
     else:
-        # This case should not be reachable due to the 'choices' constraint
         print(f"Error: Unknown experiment '{args.experiment}'")
 
 if __name__ == "__main__":
