@@ -43,7 +43,7 @@ def perform_coverage_run(T: int, num_mc_runs: int = 1000) -> Dict[str, float]:
     CONFIDENCE_DELTA = 0.05
     BOOTSTRAP_ITERATIONS = 1000
     DEGREES_OF_FREEDOM = 2
-
+    TUNING_FACTOR = 0.3
     # === 4. Initialize failure counters ===
     failure_counts = { 'dd_bounds': 0, 'bootstrap': 0, 'set_membership': 0 }
 
@@ -59,7 +59,7 @@ def perform_coverage_run(T: int, num_mc_runs: int = 1000) -> Dict[str, float]:
             )
             A_est_dd, B_est_dd = estimate_least_squares_iid(x_iid, u_iid, y_iid)
             if A_est_dd is not None:
-                p_matrix = calculate_p_matrix_for_confidence_ellipse(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
+                p_matrix = calculate_p_matrix_for_confidence_ellipse(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA, TUNING_FACTOR)
                 ellipse_dd = ConfidenceEllipse(center=(A_est_dd.item(), B_est_dd.item()), p_matrix=p_matrix)
                 if not ellipse_dd.contains(TRUE_PARAMS_TUPLE):
                     failure_counts['dd_bounds'] += 1
@@ -127,3 +127,51 @@ if __name__ == '__main__':
         method_name = method_key.replace('_failure_rate', '')
         print(f"{method_name:<25} | {rate:>14.2%}")
     print("="*45)
+
+
+
+
+def perform_bootstrap_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_base: int = 0) -> Dict[str, float]:
+    """
+    WORKER: Performs a Monte Carlo run to find the failure rate ONLY for the Bootstrap method.
+    """
+    # --- Configuration for this specific run ---
+    TRUE_PARAMS_DICT = {'a': 0.5, 'b': 0.5}
+    TRUE_PARAMS_TUPLE = tuple(TRUE_PARAMS_DICT.values())
+    NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
+    INPUT_STD_DEV_U = 1.0
+    CONFIDENCE_DELTA = 0.05
+    BOOTSTRAP_ITERATIONS = 500
+    
+    failure_count = 0
+
+    # --- Main Monte Carlo Loop ---
+    for i in range(num_mc_runs):
+        current_seed = seed_base * 10000 + i
+
+        # --- Generate time-series data for the bootstrap pipeline ---
+        state_ts, input_ts, _ = generate_time_series_data(
+            system_params=TRUE_PARAMS_DICT, timesteps=T, 
+            output_path=GENERATED_DATA_DIR,                 # KORRIGIERT
+            base_filename=f"temp_coverage_variance_run{i}", # KORRIGIERT
+            noise_config={'distribution': 'gaussian', 'std_dev': NOISE_STD_DEV_W}, 
+            seed=current_seed
+        )
+        
+        state_ts, input_ts = np.array([state_ts.flatten()]), np.array([input_ts.flatten()])
+
+        # --- Run Bootstrap and check coverage ---
+        try:
+            A_est_bs, B_est_bs = estimate_least_squares_timeseries(state_ts, input_ts)
+            bootstrap_results = perform_bootstrap_analysis(
+                initial_estimate=(A_est_bs, B_est_bs), data_shape=(1, T),
+                sigmas={'u': INPUT_STD_DEV_U, 'w': NOISE_STD_DEV_W}, M=BOOTSTRAP_ITERATIONS,
+                delta=CONFIDENCE_DELTA, seed=current_seed + 1
+            )
+            rect = ConfidenceRectangle(center=(A_est_bs.item(), B_est_bs.item()), epsilons=(bootstrap_results['epsilon_A'], bootstrap_results['epsilon_B']))
+            if not rect.contains(TRUE_PARAMS_TUPLE):
+                failure_count += 1
+        except Exception:
+            failure_count += 1
+    
+    return {'bootstrap_failure_rate': failure_count / num_mc_runs}

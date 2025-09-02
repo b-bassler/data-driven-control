@@ -127,13 +127,12 @@ def calculate_ellipse_from_qmi(
     r_raw = r_matrix.item()
 
   
-    # ================================================================
+
     # The standard ellipse derivation (pages 3-4) assumes the form ... <= 0.
     # We flip the signs of P, q, and r to match this convention.
     P = -P_raw
     q = -q_raw
     r = -r_raw
-    # ================================================================
 
     # 2. Convert to standard ellipsoid form: (θ - θ_c)ᵀ * A * (θ - θ_c) <= 1
     try:

@@ -12,12 +12,15 @@ from experiments.run_data_dependent_bounds import run_data_dependent_bounds_expe
 from experiments.run_bootstrap_dean import run_bootstrap_dean_experiment
 from experiments.run_set_membership import run_set_membership_experiment
 from experiments.run_qmi_analysis import run_qmi_analysis_experiment
-from experiments.run_sysid_comparison import run_sysid_comparison_experiment
 from experiments.run_final_comparison import run_final_comparison_experiment
-from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_comparison
 from experiments.run_mc_final_comparison import run_monte_carlo_final_comparison
 from experiments.run_coverage_validation import perform_coverage_run
 from experiments.run_coverage_validation_over_T import run_coverage_validation_over_T
+from experiments.run_dd_bounds_calibration import run_dd_bounds_calibration_experiment
+from experiments.run_bootstrap_validation import run_bootstrap_validation_experiment
+from experiments.run_bootstrap_iid_validation import run_bootstrap_iid_validation_experiment
+from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_methods
+from experiments.run_coverage_variance_analysis import run_coverage_variance_analysis
 
 
 def main():
@@ -34,7 +37,10 @@ def main():
         "experiment", 
         choices=['dd-bounds', 'bootstrap-dean', 'set-membership', 'qmi-ellipse',
                  'sysid-compare', 'final-comparison', 
-                 'mc-sysid-compare', 'mc-final-compare', 'coverage-test','coverage-over-t'], 
+                 'mc-sysid-compare', 'mc-final-compare', 'coverage-test',
+                 'coverage-over-t', 'calibrate-dd', 'bootstrap-validation',
+                 'bootstrap-iid-validation', 'sysid-methods-compare',
+                 'coverage-variance'], 
         help="The name of the experiment to run."
     )
     
@@ -58,6 +64,8 @@ def main():
         os.path.join(RESULTS_DIR, "figures", "set_membership"),
         os.path.join(RESULTS_DIR, "figures", "sysid_comparison"),
         os.path.join(RESULTS_DIR, "figures", "qmi_ellipse"),
+        os.path.join(RESULTS_DIR, "figures", "coverage_validation"),
+        os.path.join(RESULTS_DIR, "figures", "calibration"),
     ]
     for dir_path in required_dirs:
         os.makedirs(dir_path, exist_ok=True)
@@ -74,17 +82,23 @@ def main():
     elif args.experiment == 'qmi-ellipse':
         run_qmi_analysis_experiment()
     elif args.experiment == 'sysid-compare':
-        run_sysid_comparison_experiment(data_seed=0)
-    elif args.experiment == 'final-comparison':
         run_final_comparison_experiment(data_seed=0)
-    elif args.experiment == 'mc-sysid-compare':
-        run_monte_carlo_sysid_comparison(num_mc_runs=args.runs)
     elif args.experiment == 'mc-final-compare':
         run_monte_carlo_final_comparison(num_mc_runs=args.runs)
     elif args.experiment == 'coverage-test': 
         perform_coverage_run(T=100, num_mc_runs=args.runs)
-    elif args.experiment == 'coverage-over-t': 
+    elif args.experiment == 'coverage-over-t':
         run_coverage_validation_over_T()
+    elif args.experiment == 'calibrate-dd':
+        run_dd_bounds_calibration_experiment()
+    elif args.experiment == 'bootstrap-validation':
+        run_bootstrap_validation_experiment()
+    elif args.experiment == 'bootstrap-iid-validation':
+        run_bootstrap_iid_validation_experiment()
+    elif args.experiment == 'sysid-methods-compare':
+        run_monte_carlo_sysid_methods(num_mc_runs=args.runs)
+    elif args.experiment == 'coverage-variance': 
+        run_coverage_variance_analysis()
     else:
         print(f"Error: Unknown experiment '{args.experiment}'")
 

@@ -17,7 +17,7 @@ def run_coverage_validation_over_T():
     print("--- Starting Coverage Validation over a range of T ---")
     
     # Configuration 
-    T_RANGE = np.arange(10, 300, 20)
+    T_RANGE = np.arange(50, 401, 50)
     NUM_MC_RUNS_PER_T = 100 # Number of MC runs for each T-value
     CONFIDENCE_DELTA = 0.05 #for plot only, delta config in run_coverage_validation.py
 

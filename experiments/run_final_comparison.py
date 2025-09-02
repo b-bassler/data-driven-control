@@ -41,7 +41,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
     DEGREES_OF_FREEDOM = 2
-    BOOTSTRAP_ITERATIONS = 1000
+    BOOTSTRAP_ITERATIONS = 100
 
     # === 4. Loop over T and collect all metrics ===
     results_list = []

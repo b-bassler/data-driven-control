@@ -2,7 +2,6 @@
 import numpy as np
 import os
 
-print("--- RUNNING LATEST VERSION OF data_generation.py ---")
 
 def generate_time_series_data(
     system_params: dict,
@@ -40,10 +39,10 @@ def generate_time_series_data(
     input_signal = rng.standard_normal((1, timesteps))  # Input signal, normal distributed (mean=0, std=1)
     noise_dist = noise_config.get('distribution')
     if noise_dist == 'uniform':
-        level = noise_config.get('level', 0.01) #defaults to 0.5
+        level = noise_config.get('level', 0.01) #defaults to 0.01
         noise_signal = rng.uniform(-level, level, (1, timesteps))
     elif noise_dist == 'gaussian':
-        std_dev = noise_config.get('std_dev', 0.01) #defaults to 0.5
+        std_dev = noise_config.get('std_dev', 0.01) #defaults to 0.01
         noise_signal = rng.normal(0, std_dev, (1, timesteps))
     else:
         raise ValueError(f"Unknown noise distribution: {noise_dist}")
@@ -57,13 +56,11 @@ def generate_time_series_data(
 
     # 5. Save data to files
     os.makedirs(output_path, exist_ok=True)
-    print(f"Saving data in folder: {output_path}")
 
     np.save(os.path.join(output_path, f"{base_filename}_state.npy"), state_vector)
     np.save(os.path.join(output_path, f"{base_filename}_input.npy"), input_signal)
     np.save(os.path.join(output_path, f"{base_filename}_noise.npy"), noise_signal)
     
-    print(f"Data for '{base_filename}' saved successfully. ")
 
     # Optional: Return data in case it's needed immediately for further processing
     return state_vector, input_signal, noise_signal
@@ -121,13 +118,11 @@ def generate_iid_samples(
 
     # 5. Save the generated data arrays
     os.makedirs(output_path, exist_ok=True)
-    print(f"Saving I.I.D. data in folder: {output_path}")
 
     np.save(os.path.join(output_path, f"{base_filename}_x_samples.npy"), x)
     np.save(os.path.join(output_path, f"{base_filename}_u_samples.npy"), u)
     np.save(os.path.join(output_path, f"{base_filename}_w_samples.npy"), w)
     np.save(os.path.join(output_path, f"{base_filename}_y_output.npy"), y)
 
-    print(f"I.I.D. data for '{base_filename}' saved successfully.")
 
     return x, u, w, y

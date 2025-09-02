@@ -457,3 +457,110 @@ def plot_coverage_trend(
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
     print(f"-> Coverage trend plot saved to: {output_path}")
+
+
+
+
+
+
+def plot_calibration_curve(
+    dataframe: pd.DataFrame,
+    target_rate: float,
+    output_path: str
+) -> None:
+    """
+    Plots the failure rate vs. the tuning factor for the calibration experiment.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame with 'tuning_factor' and 'failure_rate' columns.
+        target_rate (float): The desired failure rate (e.g., 0.05) to be drawn as a line.
+        output_path (str): The full path to save the plot image.
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    # Plot the calculated failure rate against the tuning factor
+    ax.plot(dataframe['tuning_factor'], dataframe['failure_rate'], marker='o', linestyle='-', label='Empirical Failure Rate')
+
+    # Plot a horizontal line for the target failure rate for easy comparison
+    ax.axhline(y=target_rate, color='red', linestyle='--', label=f'Target Rate ({target_rate:.0%})')
+
+    ax.set_xlabel("Tuning Factor for Constant C")
+    ax.set_ylabel("Empirical Failure Rate")
+    ax.set_title("Calibration Curve for Data-Dependent Bounds")
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    
+    # Format y-axis as percentage
+    ax.yaxis.set_major_formatter(plt.FuncFormatter('{:.1%}'.format))
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Calibration plot saved to: {output_path}")
+
+
+
+
+
+
+def plot_bootstrap_coverage_trend(
+    dataframe: pd.DataFrame,
+    target_rate: float,
+    output_path: str,
+    x_axis_label: str = "Number of Rollouts (N)"
+) -> None:
+    """
+    Plots the failure rates for A, B, and both vs. the number of rollouts (N).
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+    
+    # Plot the target failure rate
+    ax.axhline(y=target_rate, color='red', linestyle='--', label=f'Target Failure Rate ({target_rate:.0%})')
+
+    # Plot the empirical failure rates
+    ax.plot(dataframe['N'], dataframe['failure_rate_a'], marker='o', linestyle=':', label='Failure Rate for A')
+    ax.plot(dataframe['N'], dataframe['failure_rate_b'], marker='s', linestyle=':', label='Failure Rate for B')
+    ax.plot(dataframe['N'], dataframe['failure_rate_both'], marker='x', linestyle='-', label='Failure Rate for Both (Joint)')
+
+    ax.set_xlabel(x_axis_label)
+    ax.set_ylabel("Empirical Failure Rate")
+    ax.set_title("Bootstrap Coverage Validation (Total Data = N * T = const.)")
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter('{:.0%}'.format))
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Bootstrap validation plot saved to: {output_path}")
+
+
+
+
+
+
+
+def plot_histogram(
+    data: np.ndarray,
+    title: str,
+    x_label: str,
+    output_path: str,
+    bins: int = 10
+) -> None:
+    """
+    Creates and saves a histogram for a given dataset.
+    """
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    ax.hist(data, bins=bins, edgecolor='black', alpha=0.7)
+    
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Frequency")
+    ax.grid(True, axis='y', linestyle='--', alpha=0.6)
+
+    # Format x-axis as percentage if the data is a rate
+    if np.max(data) <= 1.0:
+        ax.xaxis.set_major_formatter(plt.FuncFormatter('{:.1%}'.format))
+
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Histogram saved to: {output_path}")

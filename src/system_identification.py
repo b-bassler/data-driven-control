@@ -135,7 +135,6 @@ def perform_bootstrap_analysis(
     error_A_list = []
     error_B_list = []
 
-    print(f"\nStarting bootstrap process with {M} iterations...")
     for _ in range(M):
         # Generate synthetic data based on the initial estimate
         x_synthetic, u_synthetic = _simulate_system(A_hat, B_hat, T_real, N_real, sigma_u, sigma_w, rng)
@@ -152,3 +151,57 @@ def perform_bootstrap_analysis(
     epsilon_B = np.percentile(error_B_list, 100 * (1 - delta))
     
     return {"epsilon_A": epsilon_A, "epsilon_B": epsilon_B}
+
+
+
+def perform_bootstrap_analysis_iid(
+    initial_estimate: Tuple[np.ndarray, np.ndarray],
+    N: int,
+    sigmas: Dict[str, float],
+    M: int,
+    delta: float,
+    seed: int
+) -> Dict[str, float]:
+    """
+    Performs parametric bootstrap analysis specifically for the I.I.D. case.
+    The model is y = a*x + b*u + w.
+    """
+    A_hat, B_hat = initial_estimate
+    # For I.I.D. data, we need the std dev for x, u, and w
+    sigma_x = sigmas.get('x', 1.0) # Default to 1.0 if not provided
+    sigma_u = sigmas.get('u', 1.0)
+    sigma_w = sigmas.get('w')
+
+    rng = np.random.default_rng(seed)
+    error_A_list = []
+    error_B_list = []
+
+    # Use leave=False for cleaner output when called in a loop
+    for _ in tqdm(range(M), desc=f"I.I.D. Bootstrap (N={N})", leave=False):
+        # 1. Generate new synthetic I.I.D. data based on the initial estimate
+        x_synthetic = rng.normal(0, sigma_x, (N, 1))
+        u_synthetic = rng.normal(0, sigma_u, (N, 1))
+        w_synthetic = rng.normal(0, sigma_w, (N, 1))
+        
+        # y = a*x + b*u + w
+        y_synthetic = A_hat * x_synthetic + B_hat * u_synthetic + w_synthetic
+        
+        # 2. Re-estimate with the synthetic I.I.D. data
+        A_tilde, B_tilde = estimate_least_squares_iid(x_synthetic, u_synthetic, y_synthetic)
+        
+        if A_tilde is not None:
+            # 3. Calculate and store the error
+            error_A_list.append(calculate_norm_error(A_hat, A_tilde))
+            error_B_list.append(calculate_norm_error(B_hat, B_tilde))
+
+    # 4. Calculate the confidence bounds from the collected errors
+    if not error_A_list or not error_B_list:
+        # Handle cases where all estimations failed
+        return {"epsilon_A": np.inf, "epsilon_B": np.inf}
+
+    epsilon_A = np.percentile(error_A_list, 100 * (1 - delta))
+    epsilon_B = np.percentile(error_B_list, 100 * (1 - delta))
+    
+    return {"epsilon_A": epsilon_A, "epsilon_B": epsilon_B}
+
+

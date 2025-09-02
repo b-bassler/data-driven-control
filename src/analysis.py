@@ -1,20 +1,28 @@
 import numpy as np
 from typing import Dict, Tuple
 
+
 def calculate_p_matrix_for_confidence_ellipse(
     x_data: np.ndarray, 
     u_data: np.ndarray, 
     w_std_dev: float, 
-    delta: float = 0.05
+    delta: float = 0.05,
+    tuning_factor: float = 1.0  
 ) -> np.ndarray:
     """
-    Calculates the shape matrix P for the confidence ellipse.
+    Calculates the shape matrix P for the confidence ellipse of the data dependent
+    bounds (Dean et al. Proposition 2.4). Includes an optional tuning factor
+    to scale the conservatism of the bounds.
 
     Args:
         x_data (np.ndarray): Array of state data used in the estimation.
         u_data (np.ndarray): Array of input data used in the estimation.
         w_std_dev (float): The standard deviation of the noise (sigma_w).
         delta (float): The confidence level delta (e.g., 0.05 for 95%).
+        tuning_factor (float, optional): A factor to scale the constant C. 
+                                         Defaults to 1.0 (original formulation).
+                                         Values < 1.0 lead to smaller, less
+                                         conservative ellipses.
 
     Returns:
         np.ndarray: The calculated 2x2 P-matrix for the ellipse.
@@ -22,8 +30,11 @@ def calculate_p_matrix_for_confidence_ellipse(
     n_dim = x_data.shape[1]
     p_dim = u_data.shape[1]
 
-    # Constant C from the proposition 2.4 from Dean et. al 
-    C_const = w_std_dev**2 * (np.sqrt(n_dim + p_dim) + np.sqrt(n_dim) + np.sqrt(2 * np.log(1/delta)))**2
+    # Theoretical constant C from Proposition 2.4
+    C_theory = w_std_dev**2 * (np.sqrt(n_dim + p_dim) + np.sqrt(n_dim) + np.sqrt(2 * np.log(1/delta)))**2
+
+    # Apply the tuning factor to the theoretical constant
+    C_const = C_theory * tuning_factor
 
     # Gram matrix Z^T * Z
     Z = np.hstack([x_data, u_data])
@@ -33,9 +44,6 @@ def calculate_p_matrix_for_confidence_ellipse(
     p_ellipse = gram_matrix / C_const
     
     return p_ellipse
-
-
-
 
 
 
@@ -128,7 +136,23 @@ class ConfidenceRectangle:
         # is less than or equal to the respective epsilon (half-width).
         return (np.abs(point_a - self.a_hat) <= self.epsilon_a) and \
                (np.abs(point_b - self.b_hat) <= self.epsilon_b)
+    
+    def contains_per_parameter(self, point: Tuple[float, float]) -> Dict[str, bool]:
+        """
+        Checks for containment for each parameter individually and for both jointly.
 
+        Returns:
+            A dictionary {'a': bool, 'b': bool, 'both': bool}.
+        """
+        point_a, point_b = point
+        a_is_contained = np.abs(point_a - self.a_hat) <= self.epsilon_a
+        b_is_contained = np.abs(point_b - self.b_hat) <= self.epsilon_b
+        
+        return {
+            'a': a_is_contained,
+            'b': b_is_contained,
+            'both': a_is_contained and b_is_contained
+        }
 
 class ConfidenceEllipse:
     """
@@ -249,3 +273,4 @@ class MVEEllipse:
         diff = (point_vec - self.center.flatten()).reshape(2, 1)
         value = diff.T @ self._A_shape @ diff
         return value.item() <= 1
+    
