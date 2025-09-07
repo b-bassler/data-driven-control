@@ -5,7 +5,6 @@ implemented confidence region methods for a FIXED number of data points T.
 
 import os
 import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from scipy.stats import chi2
 from typing import Dict
@@ -141,19 +140,19 @@ def perform_bootstrap_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_ba
     NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
-    BOOTSTRAP_ITERATIONS = 500
+    BOOTSTRAP_ITERATIONS = 2000
     
     failure_count = 0
 
     # --- Main Monte Carlo Loop ---
     for i in range(num_mc_runs):
-        current_seed = seed_base * 10000 + i
+        current_seed = seed_base * 10 + i
 
         # --- Generate time-series data for the bootstrap pipeline ---
         state_ts, input_ts, _ = generate_time_series_data(
             system_params=TRUE_PARAMS_DICT, timesteps=T, 
-            output_path=GENERATED_DATA_DIR,                 # KORRIGIERT
-            base_filename=f"temp_coverage_variance_run{i}", # KORRIGIERT
+            output_path=GENERATED_DATA_DIR,                 
+            base_filename=f"temp_coverage_variance_run{i}",
             noise_config={'distribution': 'gaussian', 'std_dev': NOISE_STD_DEV_W}, 
             seed=current_seed
         )
@@ -166,7 +165,7 @@ def perform_bootstrap_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_ba
             bootstrap_results = perform_bootstrap_analysis(
                 initial_estimate=(A_est_bs, B_est_bs), data_shape=(1, T),
                 sigmas={'u': INPUT_STD_DEV_U, 'w': NOISE_STD_DEV_W}, M=BOOTSTRAP_ITERATIONS,
-                delta=CONFIDENCE_DELTA, seed=current_seed + 1
+                delta=(CONFIDENCE_DELTA/2), seed=current_seed + 1
             )
             rect = ConfidenceRectangle(center=(A_est_bs.item(), B_est_bs.item()), epsilons=(bootstrap_results['epsilon_A'], bootstrap_results['epsilon_B']))
             if not rect.contains(TRUE_PARAMS_TUPLE):
@@ -175,3 +174,59 @@ def perform_bootstrap_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_ba
             failure_count += 1
     
     return {'bootstrap_failure_rate': failure_count / num_mc_runs}
+
+def perform_set_membership_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_base: int = 0) -> dict:
+    """
+    WORKER: Performs a Monte Carlo run to find the failure rate ONLY for the Set Membership method.
+    This version is corrected to exactly match the logic of the original, working Pipeline 3.
+    """
+    # --- Configuration for this specific run ---
+    TRUE_PARAMS_DICT = {'a': 0.5, 'b': 0.5}
+    TRUE_PARAMS_TUPLE = tuple(TRUE_PARAMS_DICT.values())
+    NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
+    CONFIDENCE_DELTA = 0.05
+    DEGREES_OF_FREEDOM = 2
+    
+    # --- Define project paths locally for the worker ---
+    BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
+    
+    failure_count = 0
+
+    # --- Main Monte Carlo Loop ---
+    for i in range(num_mc_runs):
+        current_seed = seed_base * 10 + i
+
+        # --- Generate time-series data ---
+        state_ts, input_ts, _ = generate_time_series_data(
+            system_params=TRUE_PARAMS_DICT, 
+            timesteps=T, 
+            output_path=GENERATED_DATA_DIR,
+            base_filename=f"temp_set_membership_run_{i}",
+            noise_config={'distribution': 'gaussian', 'std_dev': NOISE_STD_DEV_W}, 
+            seed=current_seed
+        )
+        state_ts, input_ts = np.array([state_ts.flatten()]), np.array([input_ts.flatten()])
+
+        # --- Run Set Membership and check coverage ---
+        try:
+            # KORREKTUR: Das Slicing muss exakt wie in der funktionierenden Pipeline 3 sein.
+            X_plus, X_minus, U_minus = state_ts, state_ts, input_ts
+            
+            c_delta = chi2.ppf(1 - CONFIDENCE_DELTA, df=DEGREES_OF_FREEDOM)
+            Phi11 = (NOISE_STD_DEV_W**2) * c_delta * np.eye(1); Phi12 = np.zeros((1, T)); Phi21 = Phi12.T
+            Z_reg = np.vstack([X_minus, U_minus])
+            Phi22 = -np.linalg.pinv(Z_reg) @ Z_reg
+            
+            qmi_results = calculate_ellipse_from_qmi(X_plus, X_minus, U_minus, Phi11, Phi12, Phi21, Phi22)
+            
+            if qmi_results:
+                ellipse_qmi = ConfidenceEllipse(center=qmi_results['center'], p_matrix=qmi_results['shape_matrix'])
+                if not ellipse_qmi.contains(TRUE_PARAMS_TUPLE):
+                    failure_count += 1
+            else:
+                failure_count += 1 # Zählt als Fehler, wenn QMI nicht lösbar ist
+        except Exception:
+            failure_count += 1
+            
+    return {'set_membership_failure_rate': failure_count / num_mc_runs}

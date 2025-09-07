@@ -33,21 +33,19 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
         pd.DataFrame: A DataFrame containing the collected metrics over T for this run.
     """
     # === 3. Central Configuration ===
-    T_MAX = 300
-    T_RANGE = np.arange(8, T_MAX + 1, 10)
+    T_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
     
-    TRUE_PARAMS = {'a': 0.99, 'b': 0.5}
+    TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
     DEGREES_OF_FREEDOM = 2
-    BOOTSTRAP_ITERATIONS = 100
-
+    BOOTSTRAP_ITERATIONS = 2000
     # === 4. Loop over T and collect all metrics ===
     results_list = []
     # Using leave=False for cleaner output when this function is called in a loop
     for T in tqdm(T_RANGE, desc=f"Seed {data_seed} Progress", leave=False):
-        current_seed = data_seed * 10000 + T
+        current_seed = data_seed * 100 + T
         metrics = {'T': T}
 
         # --- Pipeline 1: Data-Dependent Bounds on I.I.D. Data ---
@@ -83,7 +81,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
             bootstrap_results = perform_bootstrap_analysis(
                 initial_estimate=(A_est_bs, B_est_bs), data_shape=(1, T),
                 sigmas={'u': INPUT_STD_DEV_U, 'w': NOISE_STD_DEV_W}, M=BOOTSTRAP_ITERATIONS,
-                delta=CONFIDENCE_DELTA, seed=current_seed + 1
+                delta=(CONFIDENCE_DELTA/2), seed=current_seed + 1
             )
             rect = ConfidenceRectangle(center=(A_est_bs.item(), B_est_bs.item()), epsilons=(bootstrap_results['epsilon_A'], bootstrap_results['epsilon_B']))
             devs = rect.axis_parallel_deviations()

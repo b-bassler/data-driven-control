@@ -9,9 +9,7 @@ and generates plots showing the mean performance with confidence bands.
 import os
 import pandas as pd
 from tqdm import tqdm
-
-# --- 1. Import the correct "worker" function and the plotter ---
-# We now import the worker that runs ALL THREE methods
+from concurrent.futures import ProcessPoolExecutor
 from experiments.run_final_comparison import run_final_comparison_experiment
 from src.plotting import plot_mc_metric_comparison
 
@@ -29,13 +27,18 @@ def run_monte_carlo_final_comparison(num_mc_runs: int = 10):
     # A list to store the results DataFrame from each run
     all_dataframes = []
 
-    for i in tqdm(range(num_mc_runs), desc="Monte Carlo Runs"):
-        # Run the entire T-sweep experiment for all three methods with a new master seed
-        single_run_df = run_final_comparison_experiment(data_seed=i)
-        if single_run_df is not None and not single_run_df.empty:
-            single_run_df['run_id'] = i # Add an identifier for this run
-            all_dataframes.append(single_run_df)
-    
+    # Use a ProcessPoolExecutor to run the Monte Carlo simulations in parallel.
+    with ProcessPoolExecutor() as executor:
+        seeds = range(num_mc_runs)
+        
+        results_iterator = executor.map(run_final_comparison_experiment, seeds)
+        
+        # Collect results as they are completed and add the run_id.
+        for i, single_run_df in enumerate(tqdm(results_iterator, total=num_mc_runs, desc="Monte Carlo Runs")):
+            if single_run_df is not None and not single_run_df.empty:
+                single_run_df['run_id'] = i
+                all_dataframes.append(single_run_df)
+
     # --- Process and analyze the collected results ---
     print("\nProcessing and analyzing all Monte Carlo results...")
     

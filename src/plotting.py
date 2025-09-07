@@ -216,14 +216,14 @@ def plot_metric_trend(
 
 
 
-
 def plot_multi_metric_comparison(
     dataframe: pd.DataFrame,
     metric_configs: List[Dict[str, str]],
     x_col: str,
     y_label: str,
     title: str,
-    output_path: str
+    output_path: str,
+    use_log_scale: bool = True  
 ) -> None:
     """
     Plots a comparison of multiple metrics from a DataFrame on a single graph.
@@ -236,11 +236,13 @@ def plot_multi_metric_comparison(
         metric_configs (List[Dict[str, str]]): A list of dictionaries, where each dict
             configures one line on the plot. 
             Required keys: 'col' (column name in DataFrame), 'label' (legend name).
-            Optional keys: 'marker', 'linestyle'.
+            Optional keys: 'marker', 'linestyle', 'color'.
         x_col (str): The name of the column to use for the x-axis (e.g., 'T').
         y_label (str): The label for the y-axis.
         title (str): The title of the plot.
         output_path (str): The full path to save the plot image.
+        use_log_scale (bool, optional): If True, sets the y-axis to a logarithmic scale. 
+                                        Defaults to True.
     """
     fig, ax = plt.subplots(figsize=(12, 7))
 
@@ -261,12 +263,17 @@ def plot_multi_metric_comparison(
     ax.set_title(title)
     ax.legend()
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
-    ax.set_yscale('log') # Logarithmic scale is often best for comparing these metrics
+
+    # The scale is now set conditionally based on the new parameter.
+    if use_log_scale:
+        ax.set_yscale('log')
+    else:
+        # Optional: Ensure the plot starts at zero for linear scale if desired
+        ax.set_ylim(bottom=0)
     
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
     print(f"-> Multi-metric comparison plot saved to: {output_path}")
-
 
 
 
@@ -537,30 +544,102 @@ def plot_bootstrap_coverage_trend(
 
 
 
-
-def plot_histogram(
-    data: np.ndarray,
-    title: str,
-    x_label: str,
-    output_path: str,
-    bins: int = 10
+def plot_bootstrap_coverage_meta_analysis(
+    dataframe: pd.DataFrame,
+    target_rate: float,
+    output_path: str
 ) -> None:
     """
-    Creates and saves a histogram for a given dataset.
+    Plots the mean failure rate and its standard deviation band from a
+    bootstrap meta-experiment.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame with 'T', 'mean_failure_rate', 
+                                  and 'std_dev_failure_rate' columns.
+        target_rate (float): The desired failure rate (e.g., 0.05) to be drawn as a line.
+        output_path (str): The full path to save the plot image.
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
-    
-    ax.hist(data, bins=bins, edgecolor='black', alpha=0.7)
-    
-    ax.set_title(title)
-    ax.set_xlabel(x_label)
-    ax.set_ylabel("Frequency")
-    ax.grid(True, axis='y', linestyle='--', alpha=0.6)
+    fig, ax = plt.subplots(figsize=(12, 7))
 
-    # Format x-axis as percentage if the data is a rate
-    if np.max(data) <= 1.0:
-        ax.xaxis.set_major_formatter(plt.FuncFormatter('{:.1%}'.format))
+    # Extract the data columns
+    t_values = dataframe['T']
+    mean_rates = dataframe['mean_failure_rate']
+    std_devs = dataframe['std_dev_failure_rate']
 
+    # Plot a horizontal line for the target failure rate
+    ax.axhline(y=target_rate, color='red', linestyle='--', label=f'Target Rate ({target_rate:.0%})')
+
+    # Plot the mean failure rate as a line
+    ax.plot(t_values, mean_rates, marker='o', linestyle='-', label='Mean Failure Rate')
+    
+    # Add the shaded confidence band (+/- 1 std)
+    ax.fill_between(t_values, mean_rates - std_devs, mean_rates + std_devs,
+                    color='blue', alpha=0.2, label='±1 Std. Dev.')
+    
+    ax.set_xlabel("Number of Data Points (T)")
+    ax.set_ylabel("Empirical Failure Rate")
+    ax.set_title("Bootstrap Coverage Meta-Analysis: Mean and Std. Dev. of Failure Rate")
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.set_ylim(bottom=0)
+    
+    # Format y-axis as percentage
+    ax.yaxis.set_major_formatter(plt.FuncFormatter('{:.1%}'.format))
+    
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
-    print(f"-> Histogram saved to: {output_path}")
+    print(f"-> Meta-analysis plot saved to: {output_path}")
+
+
+
+
+
+def plot_coverage_meta_comparison(
+    dataframe: pd.DataFrame,
+    plot_configs: List,
+    target_rate: float,
+    output_path: str
+    ) -> None:
+    """
+    Plots the mean failure rates from a meta-experiment for multiple methods,
+    each with a shaded region representing +/- one standard deviation.
+
+    Args:
+        dataframe (pd.DataFrame): DataFrame with 'T' and result columns.
+        plot_configs (List): A list of dictionaries, where each dict
+            configures one line on the plot. Required keys: 'mean_col',
+            'std_dev_col', 'label', 'color', 'marker'.
+        target_rate (float): The desired failure rate to be drawn as a line.
+        output_path (str): The full path to save the plot image.
+    """
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    # Plot a horizontal line for the target failure rate
+    ax.axhline(y=target_rate, color='red', linestyle='--',
+               label=f'Target Rate ({target_rate:.0%})')
+
+    # Loop through the configuration and plot each specified method
+    for config in plot_configs:
+        t_values = dataframe['T']
+        mean_rates = dataframe[config['mean_col']]
+        std_devs = dataframe[config['std_dev_col']]
+        
+        # Plot the mean failure rate line
+        ax.plot(t_values, mean_rates, marker=config['marker'], linestyle='-',
+                label=config['label'], color=config['color'])
+
+        # Add the shaded confidence band (+/- 1 std)
+        ax.fill_between(t_values, mean_rates - std_devs, mean_rates + std_devs,
+                        color=config['color'], alpha=0.2)
+
+    ax.set_xlabel("Number of Data Points (T)")
+    ax.set_ylabel("Empirical Failure Rate")
+    ax.set_title("Coverage Meta-Analysis: Mean and Std. Dev. of Failure Rate")
+    ax.legend()
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    ax.set_ylim(bottom=0)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter('{:.0%}'.format))
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Meta-analysis comparison plot saved to: {output_path}")
