@@ -73,7 +73,7 @@ def run_coverage_meta_experiment(T_values: list[int], num_meta_runs: int, num_mc
 def run_bootstrap_setmembership_meta_analysis_experiment():
     """Main entry point for the meta-analysis experiment."""
     # --- Configuration for the Meta-Experiment ---
-    T_VALUES_TO_TEST = [20, 30]
+    T_VALUES_TO_TEST = [10, 50,]
     NUM_META_RUNS = 5
     NUM_MC_RUNS_PER_EXPERIMENT = 50
     TARGET_FAILURE_RATE = 0.05

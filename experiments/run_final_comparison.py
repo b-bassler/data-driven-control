@@ -25,12 +25,6 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     """
     Orchestrates the full comparison of all three methods for a single master data seed.
-    
-    Args:
-        data_seed (int): The master seed for this entire run to ensure reproducibility.
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the collected metrics over T for this run.
     """
     # === 3. Central Configuration ===
     T_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
@@ -41,9 +35,9 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     CONFIDENCE_DELTA = 0.05
     DEGREES_OF_FREEDOM = 2
     BOOTSTRAP_ITERATIONS = 2000
+
     # === 4. Loop over T and collect all metrics ===
     results_list = []
-    # Using leave=False for cleaner output when this function is called in a loop
     for T in tqdm(T_RANGE, desc=f"Seed {data_seed} Progress", leave=False):
         current_seed = data_seed * 100 + T
         metrics = {'T': T}
@@ -57,6 +51,10 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
             )
             A_est_dd, B_est_dd = estimate_least_squares_iid(x_iid, u_iid, y_iid)
             if A_est_dd is not None:
+                # Store the point estimate
+                metrics['dd_bounds_a_hat'] = A_est_dd.item()
+                metrics['dd_bounds_b_hat'] = B_est_dd.item()
+                
                 p_matrix = calculate_p_matrix_for_confidence_ellipse(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
                 ellipse = ConfidenceEllipse(center=(A_est_dd.item(), B_est_dd.item()), p_matrix=p_matrix)
                 devs = ellipse.axis_parallel_deviations()
@@ -78,6 +76,10 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
         # --- Pipeline 2: Bootstrap Dean on Time-Series Data ---
         try:
             A_est_bs, B_est_bs = estimate_least_squares_timeseries(state_ts, input_ts)
+            # Store the point estimate
+            metrics['bootstrap_a_hat'] = A_est_bs.item()
+            metrics['bootstrap_b_hat'] = B_est_bs.item()
+
             bootstrap_results = perform_bootstrap_analysis(
                 initial_estimate=(A_est_bs, B_est_bs), data_shape=(1, T),
                 sigmas={'u': INPUT_STD_DEV_U, 'w': NOISE_STD_DEV_W}, M=BOOTSTRAP_ITERATIONS,
@@ -102,7 +104,12 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
             
             qmi_results = calculate_ellipse_from_qmi(X_plus, X_minus, U_minus, Phi11, Phi12, Phi21, Phi22)
             if qmi_results:
-                ellipse_qmi = ConfidenceEllipse(center=qmi_results['center'], p_matrix=qmi_results['shape_matrix'])
+                # The 'center' of the QMI ellipse is its point estimate
+                center = qmi_results['center']
+                metrics['set_membership_a_hat'] = center[0]
+                metrics['set_membership_b_hat'] = center[1]
+
+                ellipse_qmi = ConfidenceEllipse(center=center, p_matrix=qmi_results['shape_matrix'])
                 devs = ellipse_qmi.axis_parallel_deviations()
                 metrics['set_membership_area'] = ellipse_qmi.area()
                 metrics['set_membership_wcd'] = ellipse_qmi.worst_case_deviation()
@@ -118,6 +125,8 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
 
 # This block allows the script to be run directly for a single test run.
 if __name__ == '__main__':
+    from src.plotting import plot_multi_metric_comparison
+    
     # Perform a single run with a default seed
     final_df = run_final_comparison_experiment(data_seed=0)
 
@@ -138,5 +147,6 @@ if __name__ == '__main__':
             {'col': 'bootstrap_area', 'label': 'Bootstrap (Rectangle)', 'marker': 'x', 'linestyle': '--'},
             {'col': 'set_membership_area', 'label': 'Set Membership (QMI)', 'marker': 's', 'linestyle': ':'}
         ]
-
+        plot_multi_metric_comparison(final_df, area_configs, 'T', 'Area', 'Area Comparison vs. T (Single Run)', os.path.join(figures_dir, "final_comparison_area_single_run.png"))
+        
         print("\n--- Single Final Comparison Run Finished Successfully! ---")

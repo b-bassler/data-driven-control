@@ -2,21 +2,26 @@
 Experiment script for a single run of the Set Membership method using the
 direct QMI derivation. This script calculates and plots one feasible set ellipse.
 """
-
+import sys
 import os
 import numpy as np
 from scipy.stats import chi2
 
-# --- 1. Imports from our src library ---
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(project_root)
+
+# --- 1. Imports from our src library (using absolute paths from project root) ---
 from src.data_generation import generate_time_series_data
 from src.set_membership import calculate_ellipse_from_qmi
 from src.analysis import ConfidenceEllipse
 from src.plotting import plot_qmi_ellipse 
 
 # --- 2. Define project paths ---
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+# The BASE_DIR is now correctly calculated by going up two levels from this file.
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
+
 
 def run_qmi_analysis_experiment():
     """

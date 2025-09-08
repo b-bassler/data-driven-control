@@ -175,10 +175,9 @@ def perform_bootstrap_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_ba
     
     return {'bootstrap_failure_rate': failure_count / num_mc_runs}
 
-def perform_set_membership_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_base: int = 0) -> dict:
+def perform_set_membership_only_coverage_run(T: int, num_mc_runs: int = 1000, seed_base: int = 0) -> dict[str, float]:
     """
-    WORKER: Performs a Monte Carlo run to find the failure rate ONLY for the Set Membership method.
-    This version is corrected to exactly match the logic of the original, working Pipeline 3.
+    WORKER: Performs a Monte Carlo run to find the failure rate only for the Set Membership method.
     """
     # --- Configuration for this specific run ---
     TRUE_PARAMS_DICT = {'a': 0.5, 'b': 0.5}
@@ -210,9 +209,7 @@ def perform_set_membership_only_coverage_run(T: int, num_mc_runs: int = 1000, se
 
         # --- Run Set Membership and check coverage ---
         try:
-            # KORREKTUR: Das Slicing muss exakt wie in der funktionierenden Pipeline 3 sein.
-            X_plus, X_minus, U_minus = state_ts, state_ts, input_ts
-            
+            X_plus, X_minus, U_minus = state_ts[:, 1:T+1], state_ts[:, :T], input_ts[:, :T]
             c_delta = chi2.ppf(1 - CONFIDENCE_DELTA, df=DEGREES_OF_FREEDOM)
             Phi11 = (NOISE_STD_DEV_W**2) * c_delta * np.eye(1); Phi12 = np.zeros((1, T)); Phi21 = Phi12.T
             Z_reg = np.vstack([X_minus, U_minus])
@@ -225,7 +222,7 @@ def perform_set_membership_only_coverage_run(T: int, num_mc_runs: int = 1000, se
                 if not ellipse_qmi.contains(TRUE_PARAMS_TUPLE):
                     failure_count += 1
             else:
-                failure_count += 1 # Zählt als Fehler, wenn QMI nicht lösbar ist
+                failure_count += 1 
         except Exception:
             failure_count += 1
             
