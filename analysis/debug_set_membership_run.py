@@ -18,7 +18,7 @@ from src.plotting import plot_qmi_ellipse
 # ======================================================================
 # === DEBUGGING CONFIGURATION ===
 T_TO_DEBUG = 70
-SEED_TO_DEBUG = 97
+SEED_TO_DEBUG = 80
 # ======================================================================
 
 # --- Define project paths ---
@@ -55,7 +55,7 @@ def debug_single_run(T: int, data_seed: int):
     X_plus, X_minus, U_minus = state_ts[:, 1:T+1], state_ts[:, :T], input_ts[:, :T]
 
     # === 3. Analyze the generated data ===
-    print("\n--- Forensic Analysis of the Input Data ---")
+    print("\n--- Analysis of the Input Data ---")
     Z_reg = np.vstack([X_minus, U_minus])
     try:
         # Check the condition number. A high number indicates potential numerical instability.

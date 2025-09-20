@@ -13,7 +13,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(project_root)
 
 # Import the "worker" function from the other experiment script and the plotter
-from experiments.run_coverage_validation import perform_bootstrap_only_coverage_run
+from old.run_coverage_validation import perform_bootstrap_only_coverage_run
 from src.plotting import plot_histogram
 
 # Define project paths
