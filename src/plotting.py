@@ -643,3 +643,47 @@ def plot_coverage_meta_comparison(
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
     print(f"-> Meta-analysis comparison plot saved to: {output_path}")
+
+
+
+
+
+
+
+def plot_tsiams_ellipse(
+    true_params: Tuple[float, float],
+    estimated_params: Tuple[float, float],
+    p_matrix: np.ndarray,
+    T: int,
+    output_path: str
+    ) -> None:
+    """Visualizes a single confidence ellipse from the Tsiams method."""
+    a_hat, b_hat = estimated_params
+    eigenvalues, eigenvectors = np.linalg.eig(p_matrix)
+    
+    semi_axis_1 = 1 / np.sqrt(abs(eigenvalues[0]))
+    semi_axis_2 = 1 / np.sqrt(abs(eigenvalues[1]))
+
+    angle = np.arctan2(eigenvectors[1, 0], eigenvectors[0, 0])
+    
+    t = np.linspace(0, 2 * np.pi, 100)
+    x_points = a_hat + (semi_axis_1 * np.cos(t) * np.cos(angle) - semi_axis_2 * np.sin(t) * np.sin(angle))
+    y_points = b_hat + (semi_axis_1 * np.cos(t) * np.sin(angle) + semi_axis_2 * np.sin(t) * np.cos(angle))
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.plot(x_points, y_points, label='Tsiams Confidence Ellipse', color='darkcyan')
+    ax.fill(x_points, y_points, alpha=0.2, color='darkcyan')
+    
+    ax.scatter(*true_params, color='red', marker='x', s=120, zorder=5, label='True Parameters (a, b)')
+    ax.scatter(*estimated_params, marker='+', color='teal', s=120, zorder=5, label='LS Estimate (â, b̂)')
+
+    ax.set_title(f'Tsiams Data-Dependent Bounds (T = {T})')
+    ax.set_xlabel('Parameter a')
+    ax.set_ylabel('Parameter b')
+    ax.legend()
+    ax.grid(True)
+    ax.axis('equal')
+    
+    fig.savefig(output_path, bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    print(f"-> Tsiams ellipse plot saved to: {output_path}")

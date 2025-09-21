@@ -1,5 +1,63 @@
 import numpy as np
 from typing import Dict, Tuple
+from scipy.linalg import sqrtm
+import math
+
+
+def calculate_tsiams_ellipse_matrix(
+    state_data: np.ndarray,
+    input_data: np.ndarray,
+    true_A: np.ndarray,
+    true_B: np.ndarray,
+    sigmas: Dict[str, float],
+    delta: float,
+    c: float,
+    tau: int
+) -> Dict[str, np.ndarray]:
+    """
+    Calculates the characteristic matrix P for the Tsiams data-dependent ellipse.
+    """
+    T = input_data.shape[1]
+    
+    # Calculate V_t from the measurement data
+    V_t = np.array([
+        [np.vdot(state_data, state_data), np.vdot(state_data, input_data)],
+        [np.vdot(input_data, state_data), np.vdot(input_data, input_data)]
+    ])
+
+    # Calculate the state covariance matrix T_t using TRUE system parameters
+    T_t = np.zeros_like(true_A)
+    M = (sigmas['u']**2) * (true_B @ true_B.T) + (sigmas['w']**2)
+    t_summation = tau // 2 # In the script, t was defined as 2 for tau=2
+    for k in range(t_summation):
+        Ak = np.linalg.matrix_power(true_A, k)
+        T_t += Ak @ M @ Ak.T
+    
+    n_dim = T_t.shape[0]
+    T_t_dach = np.block([[T_t, np.zeros((n_dim, n_dim))],
+                         [np.zeros((n_dim, n_dim)), (sigmas['u']**2) * np.eye(n_dim)]])
+
+    V = c * tau * math.floor(T / tau) * T_t_dach
+    V_dach = V_t + V
+
+    # Calculate the radius of the uncertainty ball
+    log_term = np.log(
+        (np.sqrt(np.linalg.det(V_dach)) / np.sqrt(np.linalg.det(V))) * (5**n_dim / delta)
+    )
+    norm_term_sq = np.linalg.norm(sqrtm(V_dach) @ np.linalg.inv(sqrtm(V_t)), ord=2)**2
+    radius = 8 * (sigmas['w']**2) * log_term * norm_term_sq
+
+    # The characteristic matrix of the ellipse
+    p_matrix = V_dach / radius
+    
+    return {'p_matrix': p_matrix}
+
+
+
+
+
+
+
 
 
 def calculate_p_matrix_for_confidence_ellipse(

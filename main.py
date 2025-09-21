@@ -19,7 +19,7 @@ from experiments.run_dd_bounds_calibration import run_dd_bounds_calibration_expe
 from experiments.run_bootstrap_validation import run_bootstrap_validation_experiment
 from experiments.run_bootstrap_iid_validation import run_bootstrap_iid_validation_experiment
 from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_methods
-#from experiments.run_coverage_variance_analysis import run_coverage_variance_analysis
+from experiments.single_runs.run_tsiams_analysis import run_tsiams_analysis_experiment
 from experiments.run_bootstrap_setmembership_meta_analysis import run_bootstrap_setmembership_meta_analysis_experiment
 
 def main():
@@ -39,7 +39,7 @@ def main():
                  'mc-sysid-compare', 'mc-final-compare', 'coverage-test',
                  'coverage-over-t', 'calibrate-dd', 'bootstrap-validation',
                  'bootstrap-iid-validation', 'sysid-methods-compare',
-                 'coverage-variance', 'bootstrap-setmembership-meta'], 
+                 'coverage-variance', 'bootstrap-setmembership-meta', 'tsiamis-bounds'], 
         help="The name of the experiment to run."
     )
     
@@ -98,6 +98,8 @@ def main():
    #     run_coverage_variance_analysis()
     elif args.experiment == 'bootstrap-setmembership-meta':
         run_bootstrap_setmembership_meta_analysis_experiment()
+    elif args.experiment == 'tsiamis-bounds': 
+        run_tsiams_analysis_experiment()
     else:
         print(f"Error: Unknown experiment '{args.experiment}'")
 

@@ -30,7 +30,7 @@ def run_qmi_analysis_experiment():
     print("--- Starting Single Run: QMI-based Ellipse Analysis ---")
 
     # === 3. Central Configuration for this specific run 
-    T = 50  # The number of data points to use for this run
+    T = 50  # number of data points 
     DATA_SEED = 2025
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
