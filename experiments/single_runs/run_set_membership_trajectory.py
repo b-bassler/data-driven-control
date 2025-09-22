@@ -34,7 +34,7 @@ def run_qmi_analysis_experiment():
     DATA_SEED = 2025
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
-    NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
+    NOISE_STD_DEV_W = 0.1
     CONFIDENCE_DELTA = 0.05
     DEGREES_OF_FREEDOM = 2
 
@@ -116,3 +116,7 @@ def run_qmi_analysis_experiment():
     )
 
     print("\n--- QMI Ellipse Experiment Finished Successfully! ---")
+
+
+if __name__ == '__main__':
+    run_qmi_analysis_experiment()

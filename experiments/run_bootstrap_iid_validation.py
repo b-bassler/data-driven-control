@@ -47,7 +47,6 @@ def run_bootstrap_iid_validation_experiment():
 
         for i in range(NUM_MC_RUNS):
             try:
-                # --- CORRECTED DATA GENERATION CALL ---
                 x_iid, u_iid, _, y_iid = generate_iid_samples(
                     N=N, system_params=TRUE_PARAMS_DICT,
                     params_config={'x_std_dev': 1.0, 'u_std_dev': INPUT_STD_DEV_U, 'w_std_dev': NOISE_STD_DEV_W},

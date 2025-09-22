@@ -10,7 +10,7 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 # --- Import all available experiment functions ---
 from experiments.single_runs.run_data_dependent_bounds import run_data_dependent_bounds_experiment
 from experiments.single_runs.run_bootstrap_dean import run_bootstrap_dean_experiment
-from experiments.single_runs.run_qmi_analysis import run_qmi_analysis_experiment
+from experiments.single_runs.run_set_membership_trajectory import run_qmi_analysis_experiment
 from old.run_final_comparison import run_final_comparison_experiment
 from experiments.run_mc_final_comparison import run_monte_carlo_final_comparison
 from old.run_coverage_validation import perform_coverage_run
@@ -21,6 +21,8 @@ from experiments.run_bootstrap_iid_validation import run_bootstrap_iid_validatio
 from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_methods
 from experiments.single_runs.run_tsiams_analysis import run_tsiams_analysis_experiment
 from experiments.run_bootstrap_setmembership_meta_analysis import run_bootstrap_setmembership_meta_analysis_experiment
+from experiments.run_mc_trajectory import run_mc_trajectory_comparison
+
 
 def main():
     """
@@ -39,7 +41,7 @@ def main():
                  'mc-sysid-compare', 'mc-final-compare', 'coverage-test',
                  'coverage-over-t', 'calibrate-dd', 'bootstrap-validation',
                  'bootstrap-iid-validation', 'sysid-methods-compare',
-                 'coverage-variance', 'bootstrap-setmembership-meta', 'tsiamis-bounds'], 
+                 'coverage-variance', 'bootstrap-setmembership-meta', 'tsiamis-bounds', 'trajectory-comparison'], 
         help="The name of the experiment to run."
     )
     
@@ -100,6 +102,8 @@ def main():
         run_bootstrap_setmembership_meta_analysis_experiment()
     elif args.experiment == 'tsiamis-bounds': 
         run_tsiams_analysis_experiment()
+    elif args.experiment == 'trajectory-comparison':
+        run_mc_trajectory_comparison(num_mc_runs=args.runs)
     else:
         print(f"Error: Unknown experiment '{args.experiment}'")
 
