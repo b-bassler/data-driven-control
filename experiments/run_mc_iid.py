@@ -37,7 +37,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     N_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
-    NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
+    NOISE_STD_DEV_W = 0.1
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
     DEGREES_OF_FREEDOM = 2
@@ -108,9 +108,9 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
         except Exception as e:
             print(f"Warning: Bootstrap failed for T={N}, Seed={data_seed} with error: {e}")
 
-        # --- Pipeline 3: Set Membership via direct QMI on Time-Series Data ---
+        # --- Pipeline 3: Set Membership via direct QMI on i.i.d. data ---
         try:
-            X_plus, X_minus, U_minus = state_ts[:, 1:N+1], state_ts[:, :N], input_ts[:, :N]
+            X_plus, X_minus, U_minus = y_iid.T, x_iid.T, u_iid.T
             c_delta = chi2.ppf(1 - CONFIDENCE_DELTA, df=DEGREES_OF_FREEDOM)
             Phi11 = (NOISE_STD_DEV_W**2) * c_delta * np.eye(1); Phi12 = np.zeros((1, N)); Phi21 = Phi12.T
             Z_reg = np.vstack([X_minus, U_minus])
@@ -170,7 +170,7 @@ if __name__ == '__main__':
 
 
 
-def run_monte_carlo_final_comparison(num_mc_runs: int = 10):
+def run_mc_iid_comparison(num_mc_runs: int = 10):
     """
     Performs the main Monte Carlo loop for all three methods.
     """
@@ -226,7 +226,7 @@ def run_monte_carlo_final_comparison(num_mc_runs: int = 10):
     ]
     plot_mc_metric_comparison(summary_df, area_configs, 'T', 'Mean Area (log scale)', 
                               'Monte Carlo: Mean Area Comparison', 
-                              os.path.join(figures_dir, "mc_final_comparison_area.png"))
+                              os.path.join(figures_dir, "mc_iid_comparison_area.png"))
     
     # --- Plot configuration for Worst-Case Deviation ---
     wcd_configs = [
@@ -236,7 +236,7 @@ def run_monte_carlo_final_comparison(num_mc_runs: int = 10):
     ]
     plot_mc_metric_comparison(summary_df, wcd_configs, 'T', 'Mean WCD (log scale)', 
                               'Monte Carlo: Mean WCD Comparison', 
-                              os.path.join(figures_dir, "mc_final_comparison_wcd.png"))
+                              os.path.join(figures_dir, "mc_iid_comparison_wcd.png"))
 
     # --- Plot configuration for Max Deviation in 'a' and 'b' ---
     max_dev_configs = [
@@ -249,10 +249,10 @@ def run_monte_carlo_final_comparison(num_mc_runs: int = 10):
     ]
     plot_mc_metric_comparison(summary_df, max_dev_configs, 'T', 'Mean Max Deviation (log scale)', 
                               'Monte Carlo: Mean Max Deviation for "a" and "b"', 
-                              os.path.join(figures_dir, "mc_final_comparison_dev_a_and_b.png"))
+                              os.path.join(figures_dir, "mc_iid_comparison_dev_a_and_b.png"))
 
     print("\n--- FINAL Monte Carlo Simulation Finished Successfully! ---")
 
 # Guard to allow direct execution for testing purposes
 if __name__ == '__main__':
-    run_monte_carlo_final_comparison()
+    run_mc_iid_comparison()

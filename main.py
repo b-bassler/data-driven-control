@@ -22,6 +22,7 @@ from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_methods
 from experiments.single_runs.run_tsiams_analysis import run_tsiams_analysis_experiment
 from experiments.run_bootstrap_setmembership_meta_analysis import run_bootstrap_setmembership_meta_analysis_experiment
 from experiments.run_mc_trajectory import run_mc_trajectory_comparison
+from experiments.run_mc_iid import run_mc_iid_comparison
 
 
 def main():
@@ -41,7 +42,7 @@ def main():
                  'mc-sysid-compare', 'mc-final-compare', 'coverage-test',
                  'coverage-over-t', 'calibrate-dd', 'bootstrap-validation',
                  'bootstrap-iid-validation', 'sysid-methods-compare',
-                 'coverage-variance', 'bootstrap-setmembership-meta', 'tsiamis-bounds', 'trajectory-comparison'], 
+                 'coverage-variance', 'bootstrap-setmembership-meta', 'tsiamis-bounds', 'trajectory-comparison', 'iid-comparison'], 
         help="The name of the experiment to run."
     )
     
@@ -104,6 +105,8 @@ def main():
         run_tsiams_analysis_experiment()
     elif args.experiment == 'trajectory-comparison':
         run_mc_trajectory_comparison(num_mc_runs=args.runs)
+    elif args.experiment == 'iid-comparison':
+        run_mc_iid_comparison(num_mc_runs=args.runs)
     else:
         print(f"Error: Unknown experiment '{args.experiment}'")
 

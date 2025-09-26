@@ -1,6 +1,4 @@
-import os
 import sys
-
 import os
 from concurrent.futures import ProcessPoolExecutor
 import pandas as pd
@@ -8,7 +6,6 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2
-
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
@@ -32,8 +29,8 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     # === 3. Central Configuration ===
     T_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
     
-    TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
-    NOISE_STD_DEV_W = np.sqrt((0.01**2) / 3)
+    TRUE_PARAMS = {'a': 0.99, 'b': 0.99}
+    NOISE_STD_DEV_W = 0.1
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
     DEGREES_OF_FREEDOM = 2
@@ -204,7 +201,7 @@ def run_mc_trajectory_comparison(num_mc_runs: int = 10):
     ]
     plot_mc_metric_comparison(summary_df, area_configs, 'T', 'Mean Area (log scale)', 
                               'Monte Carlo: Mean Area Comparison', 
-                              os.path.join(figures_dir, "mc_final_comparison_area.png"))
+                              os.path.join(figures_dir, "mc_trajectory_comparison_area.png"))
     
     # --- Plot configuration for Worst-Case Deviation ---
     wcd_configs = [
@@ -214,7 +211,7 @@ def run_mc_trajectory_comparison(num_mc_runs: int = 10):
     ]
     plot_mc_metric_comparison(summary_df, wcd_configs, 'T', 'Mean WCD (log scale)', 
                               'Monte Carlo: Mean WCD Comparison', 
-                              os.path.join(figures_dir, "mc_final_comparison_wcd.png"))
+                              os.path.join(figures_dir, "mc_trajectory_comparison_wcd.png"))
 
     # --- Plot configuration for Max Deviation in 'a' and 'b' ---
     max_dev_configs = [
@@ -227,7 +224,7 @@ def run_mc_trajectory_comparison(num_mc_runs: int = 10):
     ]
     plot_mc_metric_comparison(summary_df, max_dev_configs, 'T', 'Mean Max Deviation (log scale)', 
                               'Monte Carlo: Mean Max Deviation for "a" and "b"', 
-                              os.path.join(figures_dir, "mc_final_comparison_dev_a_and_b.png"))
+                              os.path.join(figures_dir, "mc_trajectory_comparison_dev_a_and_b.png"))
 
     print("\n--- FINAL Monte Carlo Simulation Finished Successfully! ---")
 

@@ -214,67 +214,70 @@ def plot_metric_trend(
     print(f"-> Trend plot saved to: {output_path}")
 
 
-
-
 def plot_multi_metric_comparison(
-    dataframe: pd.DataFrame,
+    dataframes: Dict[str, pd.DataFrame],  # Changed from 'dataframe' to 'dataframes'
     metric_configs: List[Dict[str, str]],
     x_col: str,
     y_label: str,
     title: str,
     output_path: str,
-    use_log_scale: bool = True  
+    use_log_scale: bool = True
 ) -> None:
     """
-    Plots a comparison of multiple metrics from a DataFrame on a single graph.
-    
+    Plots a comparison of multiple metrics from one or more DataFrames.
+
     This function is highly flexible and plots lines based on a configuration list,
-    allowing it to compare any number of methods.
+    allowing it to compare any number of methods from different data sources.
 
     Args:
-        dataframe (pd.DataFrame): The DataFrame containing all the results.
-        metric_configs (List[Dict[str, str]]): A list of dictionaries, where each dict
-            configures one line on the plot. 
-            Required keys: 'col' (column name in DataFrame), 'label' (legend name).
+        dataframes (Dict[str, pd.DataFrame]): A dictionary of DataFrames. 
+                                              Keys are used to select the correct DataFrame.
+        metric_configs (List[Dict[str, str]]): Configuration for each line.
+            Required keys: 'df' (key for the dataframes dict), 
+                         'col' (column name in the selected DataFrame), 
+                         'label' (legend name).
             Optional keys: 'marker', 'linestyle', 'color'.
         x_col (str): The name of the column to use for the x-axis (e.g., 'T').
         y_label (str): The label for the y-axis.
         title (str): The title of the plot.
         output_path (str): The full path to save the plot image.
-        use_log_scale (bool, optional): If True, sets the y-axis to a logarithmic scale. 
-                                        Defaults to True.
+        use_log_scale (bool, optional): If True, sets the y-axis to a logarithmic scale.
     """
     fig, ax = plt.subplots(figsize=(12, 7))
 
     # Loop through the configuration and plot each specified metric
     for config in metric_configs:
-        # Check if the column exists in the DataFrame to prevent errors
-        if config['col'] in dataframe.columns:
-            ax.plot(dataframe[x_col], dataframe[config['col']], 
-                    marker=config.get('marker', None), 
-                    linestyle=config.get('linestyle', '-'), 
+        # NEW: Select the correct DataFrame based on the config
+        df_key = config.get('df')
+        if not df_key or df_key not in dataframes:
+            print(f"Warning: DataFrame key '{df_key}' not found in provided dataframes. Skipping plot for '{config['label']}'.")
+            continue
+        
+        current_df = dataframes[df_key]
+        
+        # Check if the column exists in the selected DataFrame
+        if config['col'] in current_df.columns:
+            ax.plot(current_df.index, current_df[config['col']],  # Use index for x-axis
+                    marker=config.get('marker', None),
+                    linestyle=config.get('linestyle', '-'),
                     label=config['label'],
                     color=config.get('color', None))
         else:
-            print(f"Warning: Column '{config['col']}' not found in DataFrame. Skipping plot.")
+            print(f"Warning: Column '{config['col']}' not found in DataFrame '{df_key}'. Skipping plot.")
 
-    ax.set_xlabel("Number of Data Points (T)")
+    ax.set_xlabel("Number of Data Points (N)")
     ax.set_ylabel(y_label)
     ax.set_title(title)
     ax.legend()
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
-    # The scale is now set conditionally based on the new parameter.
     if use_log_scale:
         ax.set_yscale('log')
     else:
-        # Optional: Ensure the plot starts at zero for linear scale if desired
         ax.set_ylim(bottom=0)
     
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
-    print(f"-> Multi-metric comparison plot saved to: {output_path}")
-
 
 
 def plot_mc_metric_comparison(

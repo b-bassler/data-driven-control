@@ -1,72 +1,127 @@
-# reporting/analyze_metric_cariance.py
+# reporting/analyze_coefficient_of_variation.py
 
 import os
 import sys
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 # --- Add project root to Python path to allow imports from src ---
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.append(project_root)
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
+# Assuming a flexible plotting function exists in your src library
 from src.plotting import plot_multi_metric_comparison
 
 # --- Configuration ---
 RESULTS_DIR = os.path.join(project_root, 'results')
 FIGURES_DIR = os.path.join(RESULTS_DIR, 'figures', 'final_analysis')
 
-# Define the paths to your two summary files
+# Define the paths to your two summary files from the Monte Carlo simulations
 FILE_A050 = os.path.join(RESULTS_DIR, 'mc_final_comparison_summary_a050.csv')
 FILE_A099 = os.path.join(RESULTS_DIR, 'mc_final_comparison_summary_a099.csv')
 
-def create_variance_comparison_plot():
+def analyze_and_plot_cv():
     """
-    Loads summary data from two simulation runs and creates a comparison
-    plot of the standard deviation of the axis-parallel deviations.
+    Loads Monte Carlo summary data, calculates the Coefficient of Variation (CV)
+    for key uncertainty metrics, and generates comparison plots.
+
+    The Coefficient of Variation (CV = std / mean) is a normalized measure of
+    dispersion, which allows for a fair comparison of the variability of metrics
+    across different scales.
     """
-    print("--- Creating Set Membership variance comparison plot ---")
+    print("--- Analyzing Coefficient of Variation (Relative Standard Deviation) ---")
     os.makedirs(FIGURES_DIR, exist_ok=True)
 
-    # --- 1. Load the data ---
+    # --- 1. Load the summary data ---
     try:
         df_a050 = pd.read_csv(FILE_A050, header=[0, 1], index_col=0)
         df_a099 = pd.read_csv(FILE_A099, header=[0, 1], index_col=0)
-    except FileNotFoundError as e:
-        print("Error: Could not find result file. Please ensure both files exist:")
+    except FileNotFoundError:
+        print("Error: Could not find result files. Please ensure both files exist:")
         print(f"  - {FILE_A050}")
         print(f"  - {FILE_A099}")
         return
 
-    # --- 2. Create the plot ---
-    # We create a temporary DataFrame to make plotting easier
-    plot_df = pd.DataFrame({
-        'T': df_a050.index,
-        'std_dev_a_050': df_a050[('set_membership_max_dev_a', 'std')],
-        'std_dev_b_050': df_a050[('set_membership_max_dev_b', 'std')],
-        'std_dev_a_099': df_a099[('set_membership_max_dev_a', 'std')],
-        'std_dev_b_099': df_a099[('set_membership_max_dev_b', 'std')],
-    })
-
-    # Define the "recipe" for our flexible plotting function
-    plot_configs = [
-        {'col': 'std_dev_a_050', 'label': 'Std. Dev. of dev_a (a=0.5)', 'color': 'green', 'linestyle': '-'},
-        {'col': 'std_dev_b_050', 'label': 'Std. Dev. of dev_b (a=0.5)', 'color': 'limegreen', 'linestyle': '--'},
-        {'col': 'std_dev_a_099', 'label': 'Std. Dev. of dev_a (a=0.99)', 'color': 'purple', 'linestyle': '-'},
-        {'col': 'std_dev_b_099', 'label': 'Std. Dev. of dev_b (a=0.99)', 'color': 'mediumorchid', 'linestyle': '--'}
+    # --- 2. Calculate the Coefficient of Variation (CV) for all methods and metrics ---
+    metrics_to_analyze = [
+        'set_membership_area', 'set_membership_wcd', 'set_membership_max_dev_a', 'set_membership_max_dev_b',
+        'bootstrap_area', 'bootstrap_wcd', 'bootstrap_max_dev_a', 'bootstrap_max_dev_b',
+        'dd_bounds_area', 'dd_bounds_wcd', 'dd_bounds_max_dev_a', 'dd_bounds_max_dev_b'
     ]
-
-    output_path = os.path.join(FIGURES_DIR, "set_membership_variance_comparison.png")
     
+    cv_df_a050 = pd.DataFrame(index=df_a050.index)
+    cv_df_a099 = pd.DataFrame(index=df_a099.index)
+
+    for metric in metrics_to_analyze:
+        mean_050 = df_a050.get((metric, 'mean'), pd.Series(np.nan, index=df_a050.index))
+        std_050 = df_a050.get((metric, 'std'), pd.Series(np.nan, index=df_a050.index))
+        cv_df_a050[metric] = std_050 / mean_050.replace(0, np.nan)
+
+        mean_099 = df_a099.get((metric, 'mean'), pd.Series(np.nan, index=df_a099.index))
+        std_099 = df_a099.get((metric, 'std'), pd.Series(np.nan, index=df_a099.index))
+        cv_df_a099[metric] = std_099 / mean_099.replace(0, np.nan)
+
+    # --- 3. Generate a plot for each key metric's CV ---
+    
+    # Plot 1: CV of the Area
+    plot_configs_area = [
+        {'df': 'a050', 'col': 'dd_bounds_area', 'label': 'Data-Dependent (a=0.50)', 'color': 'blue', 'linestyle': '-'},
+        {'df': 'a050', 'col': 'bootstrap_area', 'label': 'Bootstrap (a=0.50)', 'color': 'orange', 'linestyle': '-'},
+        {'df': 'a050', 'col': 'set_membership_area', 'label': 'Set Membership (a=0.50)', 'color': 'green', 'linestyle': '-'},
+        {'df': 'a099', 'col': 'dd_bounds_area', 'label': 'Data-Dependent (a=0.99)', 'color': 'deepskyblue', 'linestyle': '--'},
+        {'df': 'a099', 'col': 'bootstrap_area', 'label': 'Bootstrap (a=0.99)', 'color': 'gold', 'linestyle': '--'},
+        {'df': 'a099', 'col': 'set_membership_area', 'label': 'Set Membership (a=0.99)', 'color': 'limegreen', 'linestyle': '--'}
+    ]
+    
+    # Pass a dictionary of dataframes to the plotting function
+    dataframes = {'a050': cv_df_a050, 'a099': cv_df_a099}
+    
+    output_path = os.path.join(FIGURES_DIR, "cv_comparison_area.png")
     plot_multi_metric_comparison(
-    dataframe=plot_df,
-    metric_configs=plot_configs,
-    x_col='T',
-    y_label='Standard Deviation of Max Deviation', 
-    title='Variance Comparison vs. T',
-    output_path=output_path,
-    use_log_scale=True 
-)
-    print(f"-> Variance comparison plot saved to: {output_path}")
+        dataframes=dataframes, metric_configs=plot_configs_area, x_col='T',
+        y_label='Coefficient of Variation (CV)',
+        title='Relative Variability of Uncertainty Area vs. N',
+        output_path=output_path, use_log_scale=False
+    )
+    print(f"-> CV comparison plot for Area saved to: {output_path}")
+
+    # Plot 2: CV of the Worst-Case Deviation (WCD)
+    plot_configs_wcd = [
+        {'df': 'a050', 'col': 'dd_bounds_wcd', 'label': 'Data-Dependent (a=0.50)', 'color': 'blue', 'linestyle': '-'},
+        {'df': 'a050', 'col': 'bootstrap_wcd', 'label': 'Bootstrap (a=0.50)', 'color': 'orange', 'linestyle': '-'},
+        {'df': 'a050', 'col': 'set_membership_wcd', 'label': 'Set Membership (a=0.50)', 'color': 'green', 'linestyle': '-'},
+        {'df': 'a099', 'col': 'dd_bounds_wcd', 'label': 'Data-Dependent (a=0.99)', 'color': 'deepskyblue', 'linestyle': '--'},
+        {'df': 'a099', 'col': 'bootstrap_wcd', 'label': 'Bootstrap (a=0.99)', 'color': 'gold', 'linestyle': '--'},
+        {'df': 'a099', 'col': 'set_membership_wcd', 'label': 'Set Membership (a=0.99)', 'color': 'limegreen', 'linestyle': '--'}
+    ]
+    output_path = os.path.join(FIGURES_DIR, "cv_comparison_wcd.png")
+    plot_multi_metric_comparison(
+        dataframes=dataframes, metric_configs=plot_configs_wcd, x_col='T',
+        y_label='Coefficient of Variation (CV)',
+        title='Relative Variability of Worst-Case Deviation vs. N',
+        output_path=output_path, use_log_scale=False
+    )
+    print(f"-> CV comparison plot for WCD saved to: {output_path}")
+
+    # Plot 3: CV of the Max Deviations (a and b)
+    plot_configs_devs = [
+        {'df': 'a050', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. dev_a (a=0.50)', 'color': 'green', 'linestyle': '-'},
+        {'df': 'a050', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. dev_b (a=0.50)', 'color': 'blue', 'linestyle': '-'},
+        {'df': 'a099', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. dev_a (a=0.99)', 'color': 'limegreen', 'linestyle': '--'},
+        {'df': 'a099', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. dev_b (a=0.99)', 'color': 'deepskyblue', 'linestyle': '--'}
+    ]
+    output_path = os.path.join(FIGURES_DIR, "cv_comparison_max_devs.png")
+    plot_multi_metric_comparison(
+        dataframes=dataframes, metric_configs=plot_configs_devs, x_col='T',
+        y_label='Coefficient of Variation (CV)',
+        title='Relative Variability of Max Parameter Deviations vs. N',
+        output_path=output_path, use_log_scale=False
+    )
+    print(f"-> CV comparison plot for Max Deviations saved to: {output_path}")
+
 
 if __name__ == '__main__':
-    create_variance_comparison_plot()
+    analyze_and_plot_cv()
+
