@@ -30,8 +30,8 @@ def run_qmi_analysis_experiment():
     print("--- Starting Single Run: QMI-based Ellipse Analysis ---")
 
     # === 3. Central Configuration for this specific run 
-    T = 50  # number of data points 
-    DATA_SEED = 2025
+    T = 100  # number of data points 
+    DATA_SEED = 1
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     NOISE_STD_DEV_W = 0.1
@@ -116,6 +116,26 @@ def run_qmi_analysis_experiment():
     )
 
     print("\n--- QMI Ellipse Experiment Finished Successfully! ---")
+
+
+# === 8. Save Bound Geometry for Comparison Plot ===
+    # =========================================================================
+    print("\nStep 5: Saving bound geometry for final comparison plot...")
+    
+    # Define a clear, descriptive path for the output file
+    comparison_dir = os.path.join(RESULTS_DIR, "comparison_data")
+    os.makedirs(comparison_dir, exist_ok=True)
+    bound_output_path = os.path.join(comparison_dir, f"bound_set_membership_trajectory_N{T}.npz")
+
+    # Save all necessary information to reconstruct the plot later
+    np.savez(
+        bound_output_path,
+        type=np.array('ellipse'),
+        method=np.array('Set Membership (QMI)'),
+        center=ellipse.center,
+        p_matrix=ellipse.p_matrix
+    )
+    print(f"-> Bound geometry saved to: {bound_output_path}")
 
 
 if __name__ == '__main__':

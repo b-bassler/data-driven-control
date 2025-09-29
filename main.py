@@ -8,12 +8,10 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 # --- Import all available experiment functions ---
-from experiments.single_runs.run_data_dependent_bounds import run_data_dependent_bounds_experiment
-from experiments.single_runs.run_bootstrap_dean import run_bootstrap_dean_experiment
+from experiments.single_runs.run_dd_bounds_iid import run_data_dependent_bounds_experiment
+from experiments.single_runs.run_bootstrap_trajectory import run_bootstrap_dean_trajectory
 from experiments.single_runs.run_set_membership_trajectory import run_qmi_analysis_experiment
-from old.run_final_comparison import run_final_comparison_experiment
 from experiments.run_mc_final_comparison import run_monte_carlo_final_comparison
-from old.run_coverage_validation import perform_coverage_run
 from experiments.run_coverage_validation_over_T import run_coverage_validation_over_T
 from experiments.run_dd_bounds_calibration import run_dd_bounds_calibration_experiment
 from experiments.run_bootstrap_validation import run_bootstrap_validation_experiment
@@ -78,7 +76,7 @@ def main():
     if args.experiment == 'dd-bounds':
         run_data_dependent_bounds_experiment()
     elif args.experiment == 'bootstrap-dean':
-        run_bootstrap_dean_experiment()
+        run_bootstrap_dean_trajectory()
     elif args.experiment == 'qmi-ellipse':
         run_qmi_analysis_experiment()
     elif args.experiment == 'sysid-compare':
