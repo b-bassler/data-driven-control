@@ -12,7 +12,7 @@ from src.plotting import plot_coverage_trend
 from src.data_generation import generate_iid_samples, generate_time_series_data
 from src.system_identification import estimate_least_squares_iid, estimate_least_squares_timeseries, perform_bootstrap_analysis
 from src.set_membership import calculate_ellipse_from_qmi
-from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_for_confidence_ellipse
+from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid
 
 
 # Define project paths
@@ -60,7 +60,7 @@ def perform_coverage_run(T: int, num_mc_runs: int = 1000) -> Dict[str, float]:
             )
             A_est_dd, B_est_dd = estimate_least_squares_iid(x_iid, u_iid, y_iid)
             if A_est_dd is not None:
-                p_matrix = calculate_p_matrix_for_confidence_ellipse(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA, TUNING_FACTOR)
+                p_matrix = calculate_p_matrix_ddbounds_iid(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA, TUNING_FACTOR)
                 ellipse_dd = ConfidenceEllipse(center=(A_est_dd.item(), B_est_dd.item()), p_matrix=p_matrix)
                 if not ellipse_dd.contains(TRUE_PARAMS_TUPLE):
                     failure_counts['dd_bounds'] += 1

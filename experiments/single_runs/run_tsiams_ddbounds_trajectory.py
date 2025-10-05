@@ -26,7 +26,7 @@ def run_tsiams_analysis_experiment():
     print("--- Starting Single Run: Tsiams Data-Dependent Bounds ---")
 
     # === Configuration ===
-    T = 100
+    T = 200
     DATA_SEED = 1
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5} 
     NOISE_STD_DEV_W = 0.1

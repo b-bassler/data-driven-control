@@ -377,59 +377,6 @@ def plot_qmi_ellipse(
 
 
 
-def plot_mvee_with_points(
-    feasible_points: np.ndarray,
-    mvee_results: Dict[str, np.ndarray],
-    true_params: Tuple[float, float],
-    T: int,
-    output_path: str
-) -> None:
-    """
-    Plots the Minimum Volume Enclosing Ellipse along with the feasible point set.
-
-    Args:
-        feasible_points (np.ndarray): The cloud of valid (a, b) pairs.
-        mvee_results (Dict[str, np.ndarray]): The result from the rsome solver, containing 'P' and 'c'.
-        true_params (Tuple[float, float]): The true parameters (a_true, b_true).
-        T (int): The number of data points used, for the plot title.
-        output_path (str): The full path to save the plot image.
-    """
-    fig, ax = plt.subplots(figsize=(10, 8))
-
-    # Plot the cloud of feasible points
-    ax.scatter(feasible_points[:, 0], feasible_points[:, 1], 
-               facecolor='none', marker=".", color='gray', label=f'{len(feasible_points)} Feasible Points')
-
-    # Calculate and plot the MVEE ellipse from the solver results
-    P_s = mvee_results['P']
-    c_s = mvee_results['c']
-    
-    t = np.linspace(0, 2 * np.pi, 200)
-    y = np.vstack([np.cos(t), np.sin(t)])
-    
-    # This is the transformation from the rsome result to ellipse points
-    ellipse_points = np.linalg.inv(P_s) @ (y + c_s[:, np.newaxis])
-
-    ax.plot(ellipse_points[0, :], ellipse_points[1, :], color='red', 
-            label='Minimum Volume Enclosing Ellipsoid')
-            
-    # Plot the true parameter value
-    ax.scatter(*true_params, color='black', marker='x', s=120, zorder=5, label='True Parameters (a, b)')
-
-    ax.set_title(f'Set Membership Feasible Set and MVEE (T = {T})')
-    ax.set_xlabel('Parameter a')
-    ax.set_ylabel('Parameter b')
-    ax.legend()
-    ax.grid(True)
-    ax.axis('equal')
-    
-    fig.savefig(output_path, bbox_inches='tight', dpi=150)
-    plt.close(fig)
-    print(f"-> MVEE plot saved to: {output_path}")
-
-
-
-
 
 
 def plot_coverage_trend(

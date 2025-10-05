@@ -35,10 +35,10 @@ def run_qmi_iid_stochastic_experiment():
     print("--- Starting Single Run: Set-Membership (I.I.D.) ---")
 
     # === 3. Central Configuration for the Experiment ===
-    N = 100
-    DATA_SEED = 2 # Use a consistent seed for fair comparison
+    N = 200
+    DATA_SEED = 2 
 
-    TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
+    TRUE_PARAMS = {'a': 0.99, 'b': 0.5}
     PARAMS_CONFIG = {
         'x_std_dev': 1.0, 'u_std_dev': 1.0, 'w_std_dev': 0.1
     }

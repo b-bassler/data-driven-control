@@ -60,7 +60,7 @@ def calculate_tsiams_ellipse_matrix(
 
 
 
-def calculate_p_matrix_for_confidence_ellipse(
+def calculate_p_matrix_ddbounds_iid(
     x_data: np.ndarray, 
     u_data: np.ndarray, 
     w_std_dev: float, 
@@ -212,123 +212,66 @@ class ConfidenceRectangle:
             'both': a_is_contained and b_is_contained
         }
 
+
+
 class ConfidenceEllipse:
     """
     Represents an elliptical confidence region derived from a shape matrix (P)
-    and calculates its metrics. Works for both DD-Bounds and QMI-Method.
+    and calculates its metrics. This corrected version uses direct analytical formulas
+    for robustness and correctness.
     """
     def __init__(self, center: Tuple[float, float], p_matrix: np.ndarray):
-        """Initializes the ellipse from its center and P-matrix."""
+        """
+        Initializes the ellipse and pre-calculates the covariance matrix,
+        which is fundamental for all metric calculations.
+        """
         self.center = np.array(center)
         self.p_matrix = p_matrix
-        
-        self._eigenvalues, self._eigenvectors = np.linalg.eig(self.p_matrix)
-        # Semi-axes are the inverse square root of the eigenvalues
-        self.semi_axes = sorted(1 / np.sqrt(np.abs(self._eigenvalues)), reverse=True)
+
+        # --- CRITICAL CORRECTION: Pre-calculate the covariance matrix ---
+        # The covariance matrix is the inverse of the shape matrix P.
+        # It is calculated once here and stored as an attribute for all methods to use.
+        try:
+            self.covariance_matrix = np.linalg.inv(self.p_matrix)
+        except np.linalg.LinAlgError:
+            print("Error: The shape matrix P is singular and cannot be inverted.")
+            # Set to identity to prevent further crashes, though metrics will be wrong.
+            self.covariance_matrix = np.eye(2)
 
     def area(self) -> float:
         """Calculates the total area of the ellipse."""
-        return np.pi * self.semi_axes[0] * self.semi_axes[1]
+        # This formula is direct and robust: Area = pi * sqrt(det(P_inv))
+        # It relies on the pre-calculated covariance_matrix.
+        return np.pi * np.sqrt(np.linalg.det(self.covariance_matrix))
 
     def worst_case_deviation(self) -> float:
-        """Returns the worst-case deviation (the longest semi-axis)."""
-        return self.semi_axes[0]
+        """
+        Returns the worst-case deviation (the longest semi-axis).
+        This is the square root of the largest eigenvalue of the covariance matrix.
+        """
+        eigenvalues_cov, _ = np.linalg.eig(self.covariance_matrix)
+        eigenvalues_cov[eigenvalues_cov < 0] = 0 # Ensure non-negativity
+        return np.sqrt(np.max(eigenvalues_cov))
 
     def axis_parallel_deviations(self) -> Dict[str, float]:
-        """Calculates the maximum deviations along each axis (bounding box)."""
-        phi = np.linspace(0, 2 * np.pi, 1000) 
-        circle_points = np.vstack([np.cos(phi), np.sin(phi)])
-        ellipse_transform = self._eigenvectors @ np.diag(self.semi_axes)
-        ellipse_points_centered = ellipse_transform @ circle_points
-        max_a = np.max(np.abs(ellipse_points_centered[0, :]))
-        max_b = np.max(np.abs(ellipse_points_centered[1, :]))
-        return {"max_dev_a": max_a, "max_dev_b": max_b}
+        """
+        Calculates the maximum deviations along each parameter axis.
+        This is correctly and directly calculated from the diagonal of the
+        pre-calculated covariance matrix.
+        """
+        # This now works because self.covariance_matrix was created in __init__
+        max_dev_a = np.sqrt(self.covariance_matrix[0, 0])
+        max_dev_b = np.sqrt(self.covariance_matrix[1, 1])
+        
+        return {"max_dev_a": max_dev_a, "max_dev_b": max_dev_b}
 
     def contains(self, point: Tuple[float, float]) -> bool:
         """
-        Checks if a given point is inside the ellipse.
-        A point theta is inside if (theta - center)^T * P * (theta - center) <= 1.
+        Checks if a given point is inside the ellipse using the quadratic form.
         """
         point_vec = np.array(point)
-        # Ensure vectors are column vectors (shape 2,1) for matrix multiplication
         diff = (point_vec - self.center).reshape(2, 1)
-        
-        # Calculate the quadratic form
         value = diff.T @ self.p_matrix @ diff
-        
         return value.item() <= 1
 
-    
-#-------------------------------------------------------------------------------------------------------
 
-
-
-class MVEEllipse:
-    """
-    Represents the Minimum Volume Enclosing Ellipsoid (MVEE) and calculates its metrics.
-    This class takes the direct output from the RSOME solver as input.
-    """
-    def __init__(self, mvee_results: Dict[str, np.ndarray]):
-        """
-        Initializes the ellipse from the RSOME solver's results.
-        It immediately calculates and stores the geometric properties.
-
-        Args:
-            mvee_results (Dict[str, np.ndarray]): A dict containing the solver's
-                                                  'P' matrix and 'c' vector.
-        """
-        if mvee_results is None or 'P' not in mvee_results or 'c' not in mvee_results:
-            raise ValueError("Invalid mvee_results provided to MVEEllipse constructor.")
-
-        P_s = mvee_results['P']
-        c_s = mvee_results['c']
-
-        # --- Translate solver output into geometric properties ---
-        # This logic is taken directly from your original, verified script.
-        
-        # Center of the ellipse
-        self.center = np.linalg.inv(P_s) @ c_s
-
-        # Calculate shape matrix A = P.T @ P to find eigenvalues for the axes
-        A_shape = P_s.T @ P_s
-        eigenvalues, self._eigenvectors = np.linalg.eig(A_shape)
-
-        # Semi-axes are the inverse of the square root of the eigenvalues
-        # We sort them to have a consistent order (major axis first)
-        sorted_indices = np.argsort(eigenvalues)[::-1] # Sort descending
-        sorted_eigenvalues = eigenvalues[sorted_indices]
-        self._eigenvectors = self._eigenvectors[:, sorted_indices]
-        self.semi_axes = 1 / np.sqrt(sorted_eigenvalues)
-
-    def area(self) -> float:
-        """Calculates the total area of the ellipse."""
-        return np.pi * self.semi_axes[0] * self.semi_axes[1]
-
-    def worst_case_deviation(self) -> float:
-        """Returns the worst-case deviation (the longest semi-axis)."""
-        return self.semi_axes[0] # The major (longest) semi-axis
-
-    def axis_parallel_deviations(self) -> Dict[str, float]:
-        """
-        Calculates the maximum deviations along each axis (half the size of the bounding box).
-        """
-        # Generate points on a unit circle
-        phi = np.linspace(0, 2 * np.pi, 1000) 
-        circle_points = np.vstack([np.cos(phi), np.sin(phi)])
-
-        # Transform points to the final ellipse shape, centered at (0,0)
-        ellipse_transform = self._eigenvectors @ np.diag(self.semi_axes)
-        ellipse_points_centered = ellipse_transform @ circle_points
-
-        # Find the maximum absolute coordinate along each axis
-        max_a = np.max(np.abs(ellipse_points_centered[0, :]))
-        max_b = np.max(np.abs(ellipse_points_centered[1, :]))
-
-        return {"max_dev_a": max_a, "max_dev_b": max_b}
-    def contains(self, point: Tuple[float, float]) -> bool:
-        """Checks if a given point is inside the MVEE."""
-        point_vec = np.array(point)
-        diff = (point_vec - self.center.flatten()).reshape(2, 1)
-        value = diff.T @ self._A_shape @ diff
-        return value.item() <= 1
-    

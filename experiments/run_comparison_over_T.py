@@ -11,7 +11,7 @@ from tqdm import tqdm
 # --- 1. Import all required tools from the src library ---
 from src.data_generation import generate_iid_samples, generate_time_series_data
 from src.system_identification import estimate_least_squares_iid, estimate_least_squares_timeseries, perform_bootstrap_analysis
-from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_for_confidence_ellipse
+from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid
 from src.plotting import plot_metric_comparison
 
 # --- 2. Define project paths ---
@@ -79,7 +79,7 @@ def run_comparison_experiment():
         # 2b. Analyze the I.I.D. data
         A_est_dd, B_est_dd = estimate_least_squares_iid(x_iid, u_iid, y_iid)
         if A_est_dd is not None:
-            p_matrix = calculate_p_matrix_for_confidence_ellipse(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
+            p_matrix = calculate_p_matrix_ddbounds_iid(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
             ellipse = ConfidenceEllipse(center=(A_est_dd.item(), B_est_dd.item()), p_matrix=p_matrix)
         else: # Handle case where estimation fails
             ellipse = None

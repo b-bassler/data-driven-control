@@ -30,7 +30,7 @@ def run_qmi_analysis_experiment():
     print("--- Starting Single Run: QMI-based Ellipse Analysis ---")
 
     # === 3. Central Configuration for this specific run 
-    T = 100  # number of data points 
+    T = 200  # number of data points 
     DATA_SEED = 1
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
@@ -68,7 +68,7 @@ def run_qmi_analysis_experiment():
         print(f"Error: Could not compute Phi22 for T={T}. Aborting.")
         return
     
-    # Call our dedicated tool function from src
+    # Call our tool function from src
     qmi_results = calculate_ellipse_from_qmi(
         X_plus, X_minus, U_minus, Phi11, Phi12, Phi21, Phi22
     )

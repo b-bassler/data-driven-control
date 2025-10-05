@@ -105,22 +105,58 @@ def analyze_and_plot_cv():
     )
     print(f"-> CV comparison plot for WCD saved to: {output_path}")
 
-    # Plot 3: CV of the Max Deviations (a and b)
-    plot_configs_devs = [
-        {'df': 'a050', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. dev_a (a=0.50)', 'color': 'green', 'linestyle': '-'},
-        {'df': 'a050', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. dev_b (a=0.50)', 'color': 'blue', 'linestyle': '-'},
-        {'df': 'a099', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. dev_a (a=0.99)', 'color': 'limegreen', 'linestyle': '--'},
-        {'df': 'a099', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. dev_b (a=0.99)', 'color': 'deepskyblue', 'linestyle': '--'}
-    ]
-    output_path = os.path.join(FIGURES_DIR, "cv_comparison_max_devs.png")
-    plot_multi_metric_comparison(
-        dataframes=dataframes, metric_configs=plot_configs_devs, x_col='T',
-        y_label='Coefficient of Variation (CV)',
-        title='Relative Variability of Max Parameter Deviations vs. N',
-        output_path=output_path, use_log_scale=False
-    )
-    print(f"-> CV comparison plot for Max Deviations saved to: {output_path}")
+# --- 3. Generate focused plots for Max Deviation CV ---
 
+    # Plot 3a: Relative Variability of Parameter 'a' Estimate
+    plot_configs_dev_a = [
+        # Data-Dependent
+        {'df': 'a050', 'col': 'dd_bounds_max_dev_a', 'label': 'Data-Dep. (a=0.50)', 'color': 'blue', 'linestyle': '-'},
+        {'df': 'a099', 'col': 'dd_bounds_max_dev_a', 'label': 'Data-Dep. (a=0.99)', 'color': 'deepskyblue', 'linestyle': '--'},
+        # Bootstrap
+        {'df': 'a050', 'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a=0.50)', 'color': 'orange', 'linestyle': '-'},
+        {'df': 'a099', 'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a=0.99)', 'color': 'gold', 'linestyle': '--'},
+        # Set Membership
+        {'df': 'a050', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. (a=0.50)', 'color': 'green', 'linestyle': '-'},
+        {'df': 'a099', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. (a=0.99)', 'color': 'limegreen', 'linestyle': '--'},
+    ]
+
+    output_path_a = os.path.join(FIGURES_DIR, "cv_comparison_max_dev_a.png")
+    plot_multi_metric_comparison(
+        dataframes=dataframes, 
+        metric_configs=plot_configs_dev_a, 
+        x_col='T',
+        y_label='Coefficient of Variation (CV)',
+        title='Relative Variability of Parameter \'a\' Estimate',
+        output_path=output_path_a, 
+        use_log_scale=False,
+    )
+    print(f"-> CV comparison plot for Parameter 'a' saved to: {output_path_a}")
+
+    # Plot 3b: Relative Variability of Parameter 'b' Estimate
+    plot_configs_dev_b = [
+    # Data-Dependent
+    {'df': 'a050', 'col': 'dd_bounds_max_dev_b', 'label': 'Data-Dep. (a=0.50), dev_b', 'color': 'blue', 'linestyle': '-'},
+    {'df': 'a099', 'col': 'dd_bounds_max_dev_b', 'label': 'Data-Dep. (a=0.99), dev_b', 'color': 'deepskyblue', 'linestyle': '--'},
+    # Bootstrap
+    {'df': 'a050', 'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (a=0.50), dev_b', 'color': 'orange', 'linestyle': '-'},
+    {'df': 'a099', 'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (a=0.99), dev_b', 'color': 'gold', 'linestyle': '--'},
+    # Set Membership
+    {'df': 'a050', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. (a=0.50), dev_b', 'color': 'green', 'linestyle': '-'},
+    {'df': 'a099', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. (a=0.99), dev_b', 'color': 'limegreen', 'linestyle': '--'},
+    ]
+
+
+    output_path_b = os.path.join(FIGURES_DIR, "cv_comparison_max_dev_b.png")
+    plot_multi_metric_comparison(
+        dataframes=dataframes, 
+        metric_configs=plot_configs_dev_b, 
+        x_col='T',
+        y_label='Coefficient of Variation (CV)',
+        title='Relative Variability of Parameter \'b\' Estimate',
+        output_path=output_path_b, 
+        use_log_scale=False,
+    )
+    print(f"-> CV comparison plot for Parameter 'b' saved to: {output_path_b}")
 
 if __name__ == '__main__':
     analyze_and_plot_cv()

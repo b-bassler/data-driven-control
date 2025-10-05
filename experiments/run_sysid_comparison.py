@@ -13,7 +13,7 @@ from tqdm import tqdm
 # --- Import all required tools ---
 from src.data_generation import generate_iid_samples, generate_time_series_data
 from src.system_identification import estimate_least_squares_iid, estimate_least_squares_timeseries, perform_bootstrap_analysis, perform_bootstrap_analysis_iid
-from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_for_confidence_ellipse
+from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid
 
 # --- Define project paths ---
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -51,7 +51,7 @@ def run_sysid_methods_comparison(data_seed: int) -> pd.DataFrame:
         try:
             A_est_dd, B_est_dd = estimate_least_squares_iid(x_iid, u_iid, y_iid)
             if A_est_dd is not None:
-                p_matrix = calculate_p_matrix_for_confidence_ellipse(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
+                p_matrix = calculate_p_matrix_ddbounds_iid(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
                 ellipse = ConfidenceEllipse(center=(A_est_dd.item(), B_est_dd.item()), p_matrix=p_matrix)
                 devs = ellipse.axis_parallel_deviations()
                 metrics['dd_bounds_area'] = ellipse.area(); metrics['dd_bounds_wcd'] = ellipse.worst_case_deviation()

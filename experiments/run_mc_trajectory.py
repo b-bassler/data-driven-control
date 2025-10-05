@@ -15,7 +15,7 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 # --- 1. Import all required tools from the src library ---
 from src.data_generation import generate_time_series_data
 from src.system_identification import estimate_least_squares_timeseries, perform_bootstrap_analysis
-from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_for_confidence_ellipse, calculate_tsiams_ellipse_matrix
+from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid, calculate_tsiams_ellipse_matrix
 from src.set_membership import calculate_ellipse_from_qmi
 from src.plotting import plot_mc_metric_comparison
 
@@ -29,7 +29,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     # === 3. Central Configuration ===
     T_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
     
-    TRUE_PARAMS = {'a': 0.99, 'b': 0.99}
+    TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     NOISE_STD_DEV_W = 0.1
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
@@ -150,7 +150,7 @@ def run_mc_trajectory_comparison(num_mc_runs: int = 10):
     Performs the main Monte Carlo loop for all three methods.
     """
     print(f"--- Starting FINAL Monte Carlo Simulation with {num_mc_runs} runs ---")
-
+    TRUE_PARAMS_PLOT = {'a': 0.5, 'b': 0.5} #for plot nameing
     # A list to store the results DataFrame from each run
     all_dataframes = []
 
@@ -196,35 +196,35 @@ def run_mc_trajectory_comparison(num_mc_runs: int = 10):
     # --- Plot configuration for Area ---
     area_configs = [
         {'col': 'dd_bounds_area', 'label': 'Data-Dependent', 'color': 'blue', 'marker': 'o'},
-        {'col': 'bootstrap_area', 'label': 'Bootstrap', 'color': 'orange', 'marker': 'x'},
+        {'col': 'bootstrap_area', 'label': 'Bootstrap', 'color': 'red', 'marker': 'x'},
         {'col': 'set_membership_area', 'label': 'Set Membership (QMI)', 'color': 'green', 'marker': 's'}
     ]
     plot_mc_metric_comparison(summary_df, area_configs, 'T', 'Mean Area (log scale)', 
                               'Monte Carlo: Mean Area Comparison', 
-                              os.path.join(figures_dir, "mc_trajectory_comparison_area.png"))
+                              os.path.join(figures_dir, f"mc_trajectory_comparison_area_a{TRUE_PARAMS_PLOT['a']}.png"))
     
     # --- Plot configuration for Worst-Case Deviation ---
     wcd_configs = [
         {'col': 'dd_bounds_wcd', 'label': 'Data-Dependent', 'color': 'blue', 'marker': 'o'},
-        {'col': 'bootstrap_wcd', 'label': 'Bootstrap', 'color': 'orange', 'marker': 'x'},
+        {'col': 'bootstrap_wcd', 'label': 'Bootstrap', 'color': 'red', 'marker': 'x'},
         {'col': 'set_membership_wcd', 'label': 'Set Membership (QMI)', 'color': 'green', 'marker': 's'}
     ]
     plot_mc_metric_comparison(summary_df, wcd_configs, 'T', 'Mean WCD (log scale)', 
                               'Monte Carlo: Mean WCD Comparison', 
-                              os.path.join(figures_dir, "mc_trajectory_comparison_wcd.png"))
+                              os.path.join(figures_dir, f"mc_trajectory_comparison_wcd_a{TRUE_PARAMS_PLOT['a']}.png"))
 
     # --- Plot configuration for Max Deviation in 'a' and 'b' ---
     max_dev_configs = [
         {'col': 'dd_bounds_max_dev_a', 'label': 'DD-Bounds (a)', 'color': 'blue', 'marker': 'o', 'linestyle': '-'},
-        {'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a)', 'color': 'orange', 'marker': 'x', 'linestyle': '-'},
+        {'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a)', 'color': 'red', 'marker': 'x', 'linestyle': '-'},
         {'col': 'set_membership_max_dev_a', 'label': 'Set Membership (a)', 'color': 'green', 'marker': 's', 'linestyle': '-'},
         {'col': 'dd_bounds_max_dev_b', 'label': 'DD-Bounds (b)', 'color': 'blue', 'marker': 'o', 'linestyle': '--'},
-        {'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (b)', 'color': 'orange', 'marker': 'x', 'linestyle': '--'},
+        {'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (b)', 'color': 'red', 'marker': 'x', 'linestyle': '--'},
         {'col': 'set_membership_max_dev_b', 'label': 'Set Membership (b)', 'color': 'green', 'marker': 's', 'linestyle': '--'}
     ]
     plot_mc_metric_comparison(summary_df, max_dev_configs, 'T', 'Mean Max Deviation (log scale)', 
-                              'Monte Carlo: Mean Max Deviation for "a" and "b"', 
-                              os.path.join(figures_dir, "mc_trajectory_comparison_dev_a_and_b.png"))
+                              f'Monte Carlo: Mean Max Deviation for a = {TRUE_PARAMS_PLOT["a"]} and b = {TRUE_PARAMS_PLOT["b"]}', 
+                              os.path.join(figures_dir, f"mc_trajectory_comparison_dev_a{TRUE_PARAMS_PLOT['a']}_b{TRUE_PARAMS_PLOT['b']}.png"))
 
     print("\n--- FINAL Monte Carlo Simulation Finished Successfully! ---")
 

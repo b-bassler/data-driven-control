@@ -13,7 +13,7 @@ from typing import Dict
 # --- 1. Import all required tools from the src library ---
 from src.data_generation import generate_iid_samples
 from src.system_identification import estimate_least_squares_iid
-from src.analysis import ConfidenceEllipse, calculate_p_matrix_for_confidence_ellipse
+from src.analysis import ConfidenceEllipse, calculate_p_matrix_ddbounds_iid
 from src.plotting import plot_calibration_curve # Import is now active
 
 # --- 2. Define project paths ---
@@ -49,7 +49,7 @@ def perform_dd_bounds_coverage_run(T: int, num_mc_runs: int, tuning_factor: floa
             A_est, B_est = estimate_least_squares_iid(x_iid, u_iid, y_iid)
             if A_est is not None:
                 # Use the tuning_factor when calculating the P-matrix
-                p_matrix = calculate_p_matrix_for_confidence_ellipse(
+                p_matrix = calculate_p_matrix_ddbounds_iid(
                     x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA,
                     tuning_factor=tuning_factor
                 )

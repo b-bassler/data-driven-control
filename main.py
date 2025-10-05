@@ -8,17 +8,15 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 
 # --- Import all available experiment functions ---
-from experiments.single_runs.run_dd_bounds_iid import run_data_dependent_bounds_experiment
+from experiments.single_runs.run_dean_ddbounds_iid import run_data_dependent_bounds_experiment
 from experiments.single_runs.run_bootstrap_trajectory import run_bootstrap_dean_trajectory
 from experiments.single_runs.run_set_membership_trajectory import run_qmi_analysis_experiment
 from experiments.run_mc_final_comparison import run_monte_carlo_final_comparison
 from experiments.run_coverage_validation_over_T import run_coverage_validation_over_T
 from experiments.run_dd_bounds_calibration import run_dd_bounds_calibration_experiment
 from experiments.run_bootstrap_validation import run_bootstrap_validation_experiment
-from experiments.run_bootstrap_iid_validation import run_bootstrap_iid_validation_experiment
 from experiments.run_mc_sysid_comparison import run_monte_carlo_sysid_methods
-from experiments.single_runs.run_tsiams_analysis import run_tsiams_analysis_experiment
-from experiments.run_bootstrap_setmembership_meta_analysis import run_bootstrap_setmembership_meta_analysis_experiment
+from experiments.single_runs.run_tsiams_ddbounds_trajectory import run_tsiams_analysis_experiment
 from experiments.run_mc_trajectory import run_mc_trajectory_comparison
 from experiments.run_mc_iid import run_mc_iid_comparison
 
@@ -79,26 +77,26 @@ def main():
         run_bootstrap_dean_trajectory()
     elif args.experiment == 'qmi-ellipse':
         run_qmi_analysis_experiment()
-    elif args.experiment == 'sysid-compare':
-        run_final_comparison_experiment(data_seed=0)
+    # elif args.experiment == 'sysid-compare':
+    #     run_final_comparison_experiment(data_seed=0)
     elif args.experiment == 'mc-final-compare':
         run_monte_carlo_final_comparison(num_mc_runs=args.runs)
     elif args.experiment == 'coverage-test': 
-        perform_coverage_run(T=100, num_mc_runs=args.runs)
-    elif args.experiment == 'coverage-over-t':
+    #     perform_coverage_run(T=100, num_mc_runs=args.runs)
+    # elif args.experiment == 'coverage-over-t':
         run_coverage_validation_over_T()
     elif args.experiment == 'calibrate-dd':
         run_dd_bounds_calibration_experiment()
     elif args.experiment == 'bootstrap-validation':
         run_bootstrap_validation_experiment()
-    elif args.experiment == 'bootstrap-iid-validation':
-        run_bootstrap_iid_validation_experiment()
+    # elif args.experiment == 'bootstrap-iid-validation':
+    #     run_bootstrap_iid_validation_experiment()
     elif args.experiment == 'sysid-methods-compare':
         run_monte_carlo_sysid_methods(num_mc_runs=args.runs)
   #  elif args.experiment == 'coverage-variance': 
    #     run_coverage_variance_analysis()
-    elif args.experiment == 'bootstrap-setmembership-meta':
-        run_bootstrap_setmembership_meta_analysis_experiment()
+    # elif args.experiment == 'bootstrap-setmembership-meta':
+    #     run_bootstrap_setmembership_meta_analysis_experiment()
     elif args.experiment == 'tsiamis-bounds': 
         run_tsiams_analysis_experiment()
     elif args.experiment == 'trajectory-comparison':

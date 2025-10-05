@@ -18,7 +18,7 @@ from scipy.stats import chi2
 # --- 1. Import all required tools from the src library ---
 from src.data_generation import generate_iid_samples
 from src.system_identification import estimate_least_squares_iid, perform_bootstrap_analysis_iid
-from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_for_confidence_ellipse
+from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid
 from src.set_membership import calculate_ellipse_from_qmi
 from src.plotting import plot_mc_metric_comparison
 
@@ -65,7 +65,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
                 metrics['dd_bounds_a_hat'] = A_est_dd.item()
                 metrics['dd_bounds_b_hat'] = B_est_dd.item()
                 
-                p_matrix = calculate_p_matrix_for_confidence_ellipse(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
+                p_matrix = calculate_p_matrix_ddbounds_iid(x_iid, u_iid, NOISE_STD_DEV_W, CONFIDENCE_DELTA)
                 ellipse = ConfidenceEllipse(center=(A_est_dd.item(), B_est_dd.item()), p_matrix=p_matrix)
                 devs = ellipse.axis_parallel_deviations()
                 metrics['dd_bounds_area'] = ellipse.area()

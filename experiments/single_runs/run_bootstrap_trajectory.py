@@ -34,18 +34,18 @@ def run_bootstrap_dean_trajectory():
     print("--- Starting Bootstrap Dean Experiment ---")
 
     # === 3. Central configuration for the entire experiment ===
-    T = 100
+    T = 200
     TRUE_PARAMS = (0.5, 0.5)  
     
     # Configuration for data generation
-    DATA_SEED = 1
+    DATA_SEED = 4
     SIGMA_W = 0.1
     SIGMA_U = 1.0
     
     # Configuration for the bootstrap analysis
     BOOTSTRAP_ITERATIONS = 2000
     CONFIDENCE_DELTA = 0.05
-    BOOTSTRAP_SEED = 2
+    BOOTSTRAP_SEED = 200
     
     # === 4. Generate time-series data ===
     print(f"\nStep 1: Generating time-series data with T={T}...")

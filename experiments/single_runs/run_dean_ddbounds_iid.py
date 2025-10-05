@@ -19,7 +19,7 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from src.system_identification import estimate_least_squares_iid
-from src.analysis import calculate_p_matrix_for_confidence_ellipse, ConfidenceEllipse
+from src.analysis import calculate_p_matrix_ddbounds_iid, ConfidenceEllipse
 from src.plotting import plot_confidence_ellipse_from_matrix
 from src.data_generation import generate_iid_samples
 
@@ -68,7 +68,7 @@ def run_data_dependent_bounds_experiment():
     print("\nStep 3: Analyzing confidence ellipse...")
     
     # Calculate the P-matrix, which defines the ellipse's shape
-    p_matrix = calculate_p_matrix_for_confidence_ellipse(x_samples, u_samples, NOISE_STD_DEV, CONFIDENCE_DELTA)
+    p_matrix = calculate_p_matrix_ddbounds_iid(x_samples, u_samples, NOISE_STD_DEV, CONFIDENCE_DELTA)
     
     # Instantiate the ConfidenceEllipse to access its metric methods
     ellipse = ConfidenceEllipse(center=estimated_params, p_matrix=p_matrix)
