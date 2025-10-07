@@ -11,7 +11,7 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 from experiments.single_runs.run_dean_ddbounds_iid import run_data_dependent_bounds_experiment
 from experiments.single_runs.run_bootstrap_trajectory import run_bootstrap_dean_trajectory
 from experiments.single_runs.run_set_membership_trajectory import run_qmi_analysis_experiment
-from experiments.run_mc_final_comparison import run_monte_carlo_final_comparison
+from old.run_mc_final_comparison import run_monte_carlo_final_comparison
 from experiments.run_coverage_validation_over_T import run_coverage_validation_over_T
 from experiments.run_dd_bounds_calibration import run_dd_bounds_calibration_experiment
 from experiments.run_bootstrap_validation import run_bootstrap_validation_experiment
@@ -81,9 +81,9 @@ def main():
     #     run_final_comparison_experiment(data_seed=0)
     elif args.experiment == 'mc-final-compare':
         run_monte_carlo_final_comparison(num_mc_runs=args.runs)
-    elif args.experiment == 'coverage-test': 
+    #elif args.experiment == 'coverage-test': 
     #     perform_coverage_run(T=100, num_mc_runs=args.runs)
-    # elif args.experiment == 'coverage-over-t':
+    elif args.experiment == 'coverage-over-t':
         run_coverage_validation_over_T()
     elif args.experiment == 'calibrate-dd':
         run_dd_bounds_calibration_experiment()

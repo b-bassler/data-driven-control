@@ -15,7 +15,7 @@ from functools import partial
 
 # --- 1. Import required modules ---
 # Import BOTH worker functions now
-from old.run_coverage_validation import perform_bootstrap_only_coverage_run, perform_set_membership_only_coverage_run
+from experiments.run_coverage_validation import perform_bootstrap_only_coverage_run, perform_set_membership_only_coverage_run
 # We will create a new, more general plotting function
 from src.plotting import plot_coverage_meta_comparison 
 

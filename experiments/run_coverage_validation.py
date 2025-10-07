@@ -1,27 +1,24 @@
-
+"""
+WORKER SCRIPT to validate the empirical coverage probability of the three
+implemented confidence region methods for a FIXED number of data points T.
+"""
 
 import os
-import pandas as pd
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
 from scipy.stats import chi2
 from typing import Dict
 
-
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
-RESULTS_DIR = os.path.join(BASE_DIR, 'results')
-
-
-from src.plotting import plot_coverage_trend
+# --- 1. Import all required tools from the src library ---
 from src.data_generation import generate_iid_samples, generate_time_series_data
 from src.system_identification import estimate_least_squares_iid, estimate_least_squares_timeseries, perform_bootstrap_analysis
 from src.set_membership import calculate_ellipse_from_qmi
 from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid
 
-
-
-
+# --- 2. Define project paths ---
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
+RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
 
 def perform_coverage_run(T: int, num_mc_runs: int = 1000) -> Dict[str, float]:
@@ -38,14 +35,14 @@ def perform_coverage_run(T: int, num_mc_runs: int = 1000) -> Dict[str, float]:
     print(f"--- Running Coverage Validation for T={T} with {num_mc_runs} runs ---")
 
     # === 3. Central Configuration ===
-    TRUE_PARAMS_DICT = {'a': 0.99, 'b': 0.5}
+    TRUE_PARAMS_DICT = {'a': 0.5, 'b': 0.5}
     TRUE_PARAMS_TUPLE = tuple(TRUE_PARAMS_DICT.values())
     NOISE_STD_DEV_W = 0.1
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
-    BOOTSTRAP_ITERATIONS = 2000
+    BOOTSTRAP_ITERATIONS = 1000
     DEGREES_OF_FREEDOM = 2
-    TUNING_FACTOR = 1
+    TUNING_FACTOR = 0.3
     # === 4. Initialize failure counters ===
     failure_counts = { 'dd_bounds': 0, 'bootstrap': 0, 'set_membership': 0 }
 
@@ -82,7 +79,7 @@ def perform_coverage_run(T: int, num_mc_runs: int = 1000) -> Dict[str, float]:
             bootstrap_results = perform_bootstrap_analysis(
                 initial_estimate=(A_est_bs, B_est_bs), data_shape=(1, T),
                 sigmas={'u': INPUT_STD_DEV_U, 'w': NOISE_STD_DEV_W}, M=BOOTSTRAP_ITERATIONS,
-                delta=(CONFIDENCE_DELTA/2), seed=i + 1
+                delta=CONFIDENCE_DELTA, seed=i + 1
             )
             rect = ConfidenceRectangle(center=(A_est_bs.item(), B_est_bs.item()), epsilons=(bootstrap_results['epsilon_A'], bootstrap_results['epsilon_B']))
             if not rect.contains(TRUE_PARAMS_TUPLE):
@@ -230,38 +227,3 @@ def perform_set_membership_only_coverage_run(T: int, num_mc_runs: int = 1000, se
             failure_count += 1
             
     return {'set_membership_failure_rate': failure_count / num_mc_runs}
-
-
-
-
-def run_coverage_validation_over_T():
-    """Performs the coverage validation for a range of T."""
-    print("--- Starting Coverage Validation over a range of T ---")
-    
-    # Configuration 
-    T_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
-    NUM_MC_RUNS_PER_T = 100 # Number of MC runs for each T-value
-    CONFIDENCE_DELTA = 0.05 #for plot only, delta config in run_coverage_validation.py
-
-    #Loop over T 
-    results_list = []
-    for T in tqdm(T_RANGE, desc="Total Progress"):
-        # Run the full MC simulation for the current T
-        single_result = perform_coverage_run(T=T, num_mc_runs=NUM_MC_RUNS_PER_T)
-        # Add the current T to the dictionary for our DataFrame
-        single_result['T'] = T
-        results_list.append(single_result)
-        
-    # Process and save results 
-    results_df = pd.DataFrame(results_list)
-    results_path = os.path.join(RESULTS_DIR, "coverage_validation_over_T.csv")
-    results_df.to_csv(results_path, index=False)
-    print(f"\n-> Full coverage results saved to {results_path}")
-
-    # Generate the final plot 
-    figures_dir = os.path.join(RESULTS_DIR, "figures", "coverage_validation")
-    os.makedirs(figures_dir, exist_ok=True)
-    plot_path = os.path.join(figures_dir, "coverage_trend.png")
-    plot_coverage_trend(results_df, target_rate=CONFIDENCE_DELTA, output_path=plot_path)
-
-    print("\n--- Coverage Validation over T Finished ---")

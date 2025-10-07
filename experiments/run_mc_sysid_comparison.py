@@ -5,7 +5,7 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
-from experiments.run_sysid_comparison import run_sysid_methods_comparison
+from old.run_sysid_comparison import run_sysid_methods_comparison
 from src.plotting import plot_mc_metric_comparison
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
