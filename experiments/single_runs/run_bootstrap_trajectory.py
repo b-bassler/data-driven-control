@@ -18,8 +18,8 @@ sys.path.append(project_root)
 
 
 # --- 1. Import all required tools from the src library ---
-from src.data_generation import generate_time_series_data
-from src.system_identification import estimate_least_squares_timeseries, perform_bootstrap_analysis
+from src.data_generation import generate_trajectory_data
+from src.system_identification import estimate_least_squares_trajectory, perform_bootstrap_analysis_trajectory
 from src.plotting import plot_bootstrap_rectangle
 from src.analysis import ConfidenceRectangle
 
@@ -57,20 +57,20 @@ def run_bootstrap_dean_trajectory():
         'noise_config': {'distribution': 'gaussian', 'std_dev': SIGMA_W},
         'seed': DATA_SEED
     }
-    state_data_raw, input_data_raw, _ = generate_time_series_data(**generation_config)
+    state_data_raw, input_data_raw, _ = generate_trajectory_data(**generation_config)
     # Reshape to (N, T) format for the estimator, where N=1
     state_data = np.array([state_data_raw.flatten()])
     input_data = np.array([input_data_raw.flatten()])
 
     # === 5. Perform initial least-squares estimation ===
     print("\nStep 2: Performing initial LS estimation...")
-    A_hat, B_hat = estimate_least_squares_timeseries(state_data, input_data)
+    A_hat, B_hat = estimate_least_squares_trajectory(state_data, input_data)
     initial_estimate = (A_hat, B_hat)
     estimated_params = (A_hat.item(), B_hat.item())
     print(f"-> Initial estimate: A_hat = {estimated_params[0]:.6f}, B_hat = {estimated_params[1]:.6f}")
     
     # === 6. Perform bootstrap analysis ===
-    bootstrap_results = perform_bootstrap_analysis(
+    bootstrap_results = perform_bootstrap_analysis_trajectory(
         initial_estimate=initial_estimate,
         data_shape=(state_data.shape[0], T), # (N, T)
         sigmas={'u': SIGMA_U, 'w': SIGMA_W},

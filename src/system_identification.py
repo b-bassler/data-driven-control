@@ -4,83 +4,86 @@ import numpy as np
 from tqdm import tqdm
 from .utils import calculate_norm_error 
 
-
 def estimate_least_squares_iid(
     x_data: np.ndarray, 
     u_data: np.ndarray, 
     y_data: np.ndarray
 ) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
     """
-    Performs the least-squares estimation for i.i.d. data.
-    The model is assumed to be y = A*x + B*u.
+    Performs least-squares estimation for i.i.d. data.
+    The model is Y = Theta * Z, where Theta = [A B].
 
     Args:
-        x_data (np.ndarray): Array of state data with shape (T, n).
-        u_data (np.ndarray): Array of input data with shape (T, p).
-        y_data (np.ndarray): Array of output data with shape (T, n).
+        x_data (np.ndarray): Array of state data with shape (n, T).
+        u_data (np.ndarray): Array of input data with shape (m, T).
+        y_data (np.ndarray): Array of output data with shape (n, T).
 
     Returns:
         A tuple containing the estimated matrices (A_est, B_est).
         Returns (None, None) if the matrix is singular.
     """
-    # The regressor matrix Z has the shape (T, n+p)
-    # Each row is [x_i, u_i]
-    Z = np.hstack([x_data, u_data])
+    # 1. Build the regressor matrix Z as defined in   Eq. 2.8.
+    # It has the shape (n+m, T), where columns are the samples.
+    Z = np.vstack([x_data, u_data])
 
-    # Perform estimation (pinv is more robust against singularities than inv)
-    # Formula: theta = (Z^T * Z)^-1 * Z^T * y (from Dean et. al)
+    # 2. Assign the output data to Y.
+    Y = y_data
+
+    # 3. Perform estimation using the formula: Theta = Y*Z^T * (Z*Z^T)^-1
     try:
-        theta_est = np.linalg.pinv(Z.T @ Z) @ Z.T @ y_data
+        # Theta will be a "wide" matrix of shape (n, n+p), containing [A, B]
+        theta_est_wide = Y @ Z.T @ np.linalg.pinv(Z @ Z.T)
     except np.linalg.LinAlgError:
-        print("Error: The matrix Z.T @ Z is singular and cannot be inverted.")
+        print("Error: The matrix Z @ Z.T is singular and cannot be inverted.")
         return None, None
 
-    # Get dimensions from the data
-    n_dims = x_data.shape[1]
+    # 4. Get dimensions from the data shapes.
+    # n_dims is the number of state variables (rows in x_data).
+    n_dims = x_data.shape[0]
     
-    # Extract the estimated parameter matrices A and B
-    A_est = theta_est[:n_dims, :]
-    B_est = theta_est[n_dims:, :]
+    # 5. Extract the estimated parameter matrices A and B from the wide Theta.
+    A_est = theta_est_wide[:, :n_dims]
+    B_est = theta_est_wide[:, n_dims:]
 
     return A_est, B_est
 
 
 
-
-
-
-
-
-def estimate_least_squares_timeseries(
+def estimate_least_squares_trajectory(
     state_data: np.ndarray, 
     input_data: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Performs least-squares estimation for time series data.
-    Handles multiple rollouts (N > 1).
     """
     N, T_plus_1 = state_data.shape
     T = T_plus_1 - 1
+    
+    # For scalar systems (n=1, m=1), n_dims and n_dims are 1.
+    n_dims = 1 
 
-    # Reshape data into long vectors for estimation
-    X_ges_plus = state_data[:, 1:]
-    X_ges_minus = state_data[:, :T]
-    U_ges_minus = input_data[:, :T]
+    # 1. Prepare the data matrices X+, X-, and U-
+    X_plus = state_data[:, 1:]
+    X_minus = state_data[:, :T]
+    U_minus = input_data[:, :T]
 
-    X_N = X_ges_plus.reshape(-1, 1)
-    Z_matrix = np.hstack([
-        X_ges_minus.reshape(-1, 1),
-        U_ges_minus.reshape(-1, 1)
-    ])
+    # 2. Reshape data to create one long data record (features, N*T samples)
+    # This combines all rollouts into a single dataset.
+    Y = X_plus.reshape(n_dims, -1)
+    X_reshaped = X_minus.reshape(n_dims, -1)
+    U_reshaped = U_minus.reshape(n_dims, -1)
 
-    # Perform estimation
-    theta_est = np.linalg.pinv(Z_matrix.T @ Z_matrix) @ Z_matrix.T @ X_N
-    A_est = theta_est[:1, :]
-    B_est = theta_est[1:, :]
+    # 3. Build the regressor matrix Z as defined in Eq. 2.8.
+    Z = np.vstack([X_reshaped, U_reshaped])
+
+    # 4. Perform estimation using the same formula as in the i.i.d. case
+    theta_est_wide = Y @ Z.T @ np.linalg.pinv(Z @ Z.T)
+    
+    # 5. Extract A and B
+    A_est = theta_est_wide[:, :n_dims]
+    B_est = theta_est_wide[:, n_dims:]
     
     return A_est, B_est
-
-
 
 
 
@@ -114,9 +117,9 @@ def _simulate_system(
 
 
 
+    
 
-
-def perform_bootstrap_analysis(
+def perform_bootstrap_analysis_trajectory(
     initial_estimate: Tuple[np.ndarray, np.ndarray],
     data_shape: Tuple[int, int],
     sigmas: Dict[str, float],
@@ -140,7 +143,7 @@ def perform_bootstrap_analysis(
         x_synthetic, u_synthetic = _simulate_system(A_hat, B_hat, T_real, N_real, sigma_u, sigma_w, rng)
         
         # Re-estimate with the synthetic data
-        A_tilde, B_tilde = estimate_least_squares_timeseries(x_synthetic, u_synthetic)
+        A_tilde, B_tilde = estimate_least_squares_trajectory(x_synthetic, u_synthetic)
         
         # Calculate and store the error
         error_A_list.append(calculate_norm_error(A_hat, A_tilde))
@@ -153,7 +156,6 @@ def perform_bootstrap_analysis(
     return {"epsilon_A": epsilon_A, "epsilon_B": epsilon_B}
 
 
-
 def perform_bootstrap_analysis_iid(
     initial_estimate: Tuple[np.ndarray, np.ndarray],
     N: int,
@@ -163,45 +165,58 @@ def perform_bootstrap_analysis_iid(
     seed: int
 ) -> Dict[str, float]:
     """
-    Performs parametric bootstrap analysis specifically for the I.I.D. case.
-    The model is y = a*x + b*u + w.
+    Performs parametric bootstrap analysis for I.I.D. data.
+
+    This method generates M synthetic datasets based on an initial parameter
+    estimate (A_hat, B_hat) and the assumed noise distributions. For each
+    synthetic dataset, it re-estimates the parameters to build a distribution
+    of the estimation error, from which confidence bounds are derived.
+
+    Args:
+        initial_estimate: A tuple (A_hat, B_hat) of the initial LS estimates.
+        N: The number of i.i.d. samples to generate per bootstrap iteration.
+        sigmas: A dictionary containing the standard deviations for the data
+                generation, e.g., {'x': 1.0, 'u': 1.0, 'w': 0.1}.
+        M: The number of bootstrap iterations.
+        delta: The desired confidence level (e.g., 0.05 for 95% confidence).
+        seed: A seed for the random number generator for reproducibility.
+
+    Returns:
+        A dictionary with the calculated confidence bounds epsilon_A and epsilon_B.
     """
     A_hat, B_hat = initial_estimate
-    # For I.I.D. data, we need the std dev for x, u, and w
-    sigma_x = sigmas.get('x', 1.0) # Default to 1.0 if not provided
+    sigma_x = sigmas.get('x', 1.0)
     sigma_u = sigmas.get('u', 1.0)
     sigma_w = sigmas.get('w')
 
     rng = np.random.default_rng(seed)
-    error_A_list = []
-    error_B_list = []
+    error_A_list, error_B_list = [], []
 
-    # Use leave=False for cleaner output when called in a loop
+    # tqdm provides a progress bar for the bootstrap loop
     for _ in tqdm(range(M), desc=f"I.I.D. Bootstrap (N={N})", leave=False):
-        # 1. Generate new synthetic I.I.D. data based on the initial estimate
-        x_synthetic = rng.normal(0, sigma_x, (N, 1))
-        u_synthetic = rng.normal(0, sigma_u, (N, 1))
-        w_synthetic = rng.normal(0, sigma_w, (N, 1))
+        # 1. Generate new synthetic data as row vectors (1, N)
+        x_synthetic = rng.normal(0, sigma_x, (1, N))
+        u_synthetic = rng.normal(0, sigma_u, (1, N))
+        w_synthetic = rng.normal(0, sigma_w, (1, N))
         
-        # y = a*x + b*u + w
-        y_synthetic = A_hat * x_synthetic + B_hat * u_synthetic + w_synthetic
+        # Calculate the synthetic output using the initial estimate
+        y_synthetic = A_hat @ x_synthetic + B_hat @ u_synthetic + w_synthetic
         
-        # 2. Re-estimate with the synthetic I.I.D. data
-        A_tilde, B_tilde = estimate_least_squares_iid(x_synthetic, u_synthetic, y_synthetic)
+        # 2. Re-estimate parameters with the synthetic data
+        A_tilde, B_tilde = estimate_least_squares_iid(
+            x_synthetic, u_synthetic, y_synthetic
+        )
         
         if A_tilde is not None:
-            # 3. Calculate and store the error
+            # 3. Calculate and store the norm of the estimation error
             error_A_list.append(calculate_norm_error(A_hat, A_tilde))
             error_B_list.append(calculate_norm_error(B_hat, B_tilde))
-
-    # 4. Calculate the confidence bounds from the collected errors
+    # 4. Calculate confidence bounds from the distribution of errors
     if not error_A_list or not error_B_list:
-        # Handle cases where all estimations failed
+        # Handle cases where all estimations failed, returning infinite bounds
         return {"epsilon_A": np.inf, "epsilon_B": np.inf}
 
     epsilon_A = np.percentile(error_A_list, 100 * (1 - delta))
     epsilon_B = np.percentile(error_B_list, 100 * (1 - delta))
     
     return {"epsilon_A": epsilon_A, "epsilon_B": epsilon_B}
-
-

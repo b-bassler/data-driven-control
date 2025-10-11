@@ -10,7 +10,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(project_root)
 
 # --- Import all required tools from the src library ---
-from src.data_generation import generate_time_series_data
+from src.data_generation import generate_trajectory_data
 from src.set_membership import calculate_ellipse_from_qmi
 from src.analysis import ConfidenceEllipse
 from src.plotting import plot_qmi_ellipse
@@ -42,7 +42,7 @@ def debug_single_run(T: int, data_seed: int):
 
     # === 2. Generate the exact same dataset as in the outlier run ===
     print(f"\nStep 1: Re-generating time-series data...")
-    state_ts_raw, input_ts_raw, noise_w_raw = generate_time_series_data(
+    state_ts_raw, input_ts_raw, noise_w_raw = generate_trajectory_data(
         system_params=TRUE_PARAMS, timesteps=T, 
         output_path=GENERATED_DATA_DIR, 
         base_filename=f"debug_run_T{T}_seed{data_seed}", 

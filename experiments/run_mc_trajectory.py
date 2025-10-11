@@ -13,9 +13,9 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 
 
 # --- 1. Import all required tools from the src library ---
-from src.data_generation import generate_time_series_data
-from src.system_identification import estimate_least_squares_timeseries, perform_bootstrap_analysis
-from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid, calculate_tsiams_ellipse_matrix
+from src.data_generation import generate_trajectory_data
+from src.system_identification import estimate_least_squares_trajectory, perform_bootstrap_analysis_trajectory
+from src.analysis import ConfidenceRectangle, ConfidenceEllipse, calculate_p_matrix_ddbounds_iid, calculate_p_matrix_trajectory
 from src.set_membership import calculate_ellipse_from_qmi
 from src.plotting import plot_mc_metric_comparison
 
@@ -49,7 +49,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
 
         
         # --- Generate shared time-series data for all three pipelines ---
-        state_ts_raw, input_ts_raw, _ = generate_time_series_data(
+        state_ts_raw, input_ts_raw, _ = generate_trajectory_data(
             system_params=TRUE_PARAMS, timesteps=T, 
             output_path=GENERATED_DATA_DIR, base_filename=f"temp_timeseries_T{T}",
             noise_config={'distribution': 'gaussian', 'std_dev': NOISE_STD_DEV_W}, seed=current_seed
@@ -61,7 +61,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
         # --- Pipeline 1: Data-Dependent Bounds on Trajectory Data by Tsiamis ---
         try:
 
-            A_est_dd, B_est_dd = estimate_least_squares_timeseries(state_ts, input_ts)
+            A_est_dd, B_est_dd = estimate_least_squares_trajectory(state_ts, input_ts)
             if A_est_dd is not None:
                 # Store the point estimate
                 metrics['dd_bounds_a_hat'] = A_est_dd.item()
@@ -69,7 +69,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
                 
 
                 # Calculate Tsiamis Ellipse Matrix
-                tsiams_results = calculate_tsiams_ellipse_matrix(
+                tsiams_results = calculate_p_matrix_trajectory(
                     state_data=state_ts[:, :T], 
                     input_data=input_ts,
                     true_A=np.array([[TRUE_PARAMS['a']]]), 
@@ -92,12 +92,12 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
 
         # --- Pipeline 2: Bootstrap Dean on Time-Series Data ---
         try:
-            A_est_bs, B_est_bs = estimate_least_squares_timeseries(state_ts, input_ts)
+            A_est_bs, B_est_bs = estimate_least_squares_trajectory(state_ts, input_ts)
             # Store the point estimate
             metrics['bootstrap_a_hat'] = A_est_bs.item()
             metrics['bootstrap_b_hat'] = B_est_bs.item()
 
-            bootstrap_results = perform_bootstrap_analysis(
+            bootstrap_results = perform_bootstrap_analysis_trajectory(
                 initial_estimate=(A_est_bs, B_est_bs), data_shape=(1, T),
                 sigmas={'u': INPUT_STD_DEV_U, 'w': NOISE_STD_DEV_W}, M=BOOTSTRAP_ITERATIONS,
                 # Bonferroni correction with delta/2 

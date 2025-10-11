@@ -11,8 +11,8 @@ from tqdm import tqdm
 from typing import Dict
 
 # --- 1. Import all required tools from the src library ---
-from src.data_generation import generate_time_series_data
-from src.system_identification import estimate_least_squares_timeseries, perform_bootstrap_analysis
+from src.data_generation import generate_trajectory_data
+from src.system_identification import estimate_least_squares_trajectory, perform_bootstrap_analysis_trajectory
 from src.analysis import ConfidenceRectangle
 from src.plotting import plot_bootstrap_coverage_trend
 
@@ -51,7 +51,7 @@ def run_bootstrap_validation_experiment():
             # --- Generate N rollouts of length T ---
             all_state_ts, all_input_ts = [], []
             for n in range(N):
-                state_ts_raw, input_ts_raw, _ = generate_time_series_data(
+                state_ts_raw, input_ts_raw, _ = generate_trajectory_data(
                     system_params=TRUE_PARAMS_DICT, timesteps=T,
                     output_path=GENERATED_DATA_DIR,
                     base_filename=f"temp_bootstrap_val_run{i}_rollout{n}",
@@ -65,8 +65,8 @@ def run_bootstrap_validation_experiment():
 
             # --- Run Bootstrap and check coverage ---
             try:
-                A_est, B_est = estimate_least_squares_timeseries(state_ts, input_ts)
-                bootstrap_results = perform_bootstrap_analysis(
+                A_est, B_est = estimate_least_squares_trajectory(state_ts, input_ts)
+                bootstrap_results = perform_bootstrap_analysis_trajectory(
                     initial_estimate=(A_est, B_est), data_shape=(N, T),
                     sigmas={'u': INPUT_STD_DEV_U, 'w': NOISE_STD_DEV_W}, M=BOOTSTRAP_ITERATIONS,
                     delta=CONFIDENCE_DELTA, seed=i + 1
