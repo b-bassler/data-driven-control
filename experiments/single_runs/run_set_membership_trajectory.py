@@ -31,7 +31,7 @@ def run_qmi_analysis_experiment():
 
     # === 3. Central Configuration for this specific run 
     T = 200  # number of data points 
-    DATA_SEED = 1
+    DATA_SEED = 2
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     NOISE_STD_DEV_W = 0.1
@@ -62,6 +62,7 @@ def run_qmi_analysis_experiment():
     Phi12 = np.zeros((X_minus.shape[0], X_minus.shape[1]))
     Phi21 = Phi12.T
     Z_reg = np.vstack([X_minus, U_minus])
+
     try:
         Phi22 = -np.linalg.pinv(Z_reg) @ Z_reg
     except np.linalg.LinAlgError:
@@ -122,7 +123,7 @@ def run_qmi_analysis_experiment():
     # =========================================================================
     print("\nStep 5: Saving bound geometry for final comparison plot...")
     
-    # Define a clear, descriptive path for the output file
+    # Path for the output file
     comparison_dir = os.path.join(RESULTS_DIR, "comparison_data")
     os.makedirs(comparison_dir, exist_ok=True)
     bound_output_path = os.path.join(comparison_dir, f"bound_set_membership_trajectory_N{T}.npz")

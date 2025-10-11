@@ -52,8 +52,6 @@ def run_data_dependent_bounds_experiment():
     }
     x_samples, u_samples, _, y_samples = generate_iid_samples(**generation_config)
     
-    # NOTE: The unnecessary step of creating a subset has been removed.
-    # We directly use the generated 'x_samples', 'u_samples', 'y_samples'.
 
     # 5. Perform least-squares estimation 
     print("\nStep 2: Performing least-squares estimation...")

@@ -5,6 +5,17 @@ from matplotlib.patches import Ellipse, Rectangle
 import pandas as pd
 from typing import List, Dict
 
+
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "sans-serif",
+    "text.latex.preamble": r"""
+        \usepackage[T1]{fontenc}
+        \usepackage[light]{firasans}
+        \usepackage{amsmath}
+    """,
+})
+
 def plot_confidence_ellipse_from_matrix(
     true_params: Tuple[float, float],
     estimated_params: Tuple[float, float],
@@ -48,19 +59,20 @@ def plot_confidence_ellipse_from_matrix(
     fig, ax = plt.subplots(figsize=(10, 8))
     
     confidence_percent = 100 * (1 - confidence_delta)
-    ax.plot(ellipse_a, ellipse_b, label=f'{confidence_percent:.0f}% Confidence Ellipse', color='blue')
+    ax.plot(ellipse_a, ellipse_b,  color='blue')
     ax.fill(ellipse_a, ellipse_b, alpha=0.2, color='blue')
-    
-    ax.scatter(*true_params, color='red', marker='x', s=120, zorder=5, label='True Parameters (a, b)')
-    ax.scatter(*estimated_params, color='green', marker='+', s=120, zorder=5, label='Estimated Parameters (â, b̂)')
+    ax.scatter(*true_params, color='red', marker='x', s=120, zorder=5, label='True Parameters $(a, b)$')
+    ax.scatter(*estimated_params, color='green', marker='+', s=120, zorder=5, label=r'Estimated Parameters $(\hat{a}, \hat{b})$')
 
-    ax.set_title(f'Confidence Ellipse (T = {T})')
-    ax.set_xlabel('Parameter a')
-    ax.set_ylabel('Parameter b')
+    ax.legend(fontsize=20)
+    #ax.set_title(f'Confidence Ellipse (T = {T})')
+    ax.set_xlabel('Parameter a', fontsize = 20)
+    ax.set_ylabel('Parameter b',  fontsize = 20)
     ax.legend()
-    ax.grid(True)
     ax.axis('equal')
-    
+    ax.tick_params(axis='both', labelsize=15)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
     # Save the figure to the specified path instead of showing it
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)  
@@ -361,7 +373,7 @@ def plot_qmi_ellipse(
     ax.fill(ellipse_a, ellipse_b, alpha=0.2, color='purple')
     
     ax.scatter(*true_params, color='red', marker='x', s=120, zorder=5, label='True Parameters (a, b)')
-    ax.scatter(*ellipse_center, color='darkviolet', marker='+', s=120, zorder=5, label='Ellipse Center (â, b̂)')
+    ax.scatter(*ellipse_center, color='darkviolet', marker='+', s=120, zorder=5, label=r'Estimated Parameters $(\hat{a}, \hat{b})$')
 
     ax.set_title(f'QMI Feasible Set (T = {T})')
     ax.set_xlabel('Parameter a')
@@ -625,7 +637,7 @@ def plot_tsiams_ellipse(
     ax.fill(x_points, y_points, alpha=0.2, color='darkcyan')
     
     ax.scatter(*true_params, color='red', marker='x', s=120, zorder=5, label='True Parameters (a, b)')
-    ax.scatter(*estimated_params, marker='+', color='teal', s=120, zorder=5, label='LS Estimate (â, b̂)')
+    ax.scatter(*estimated_params, marker='+', color='teal', s=120, zorder=5, label=r'Estimated Parameters $(\hat{a}, \hat{b})$')
 
     ax.set_title(f'Tsiams Data-Dependent Bounds (T = {T})')
     ax.set_xlabel('Parameter a')
