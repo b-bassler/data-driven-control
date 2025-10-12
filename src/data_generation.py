@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 
-def generate_time_series_data(
+def generate_trajectory_data(
     system_params: dict,
     timesteps: int,
     output_path: str,
@@ -51,6 +51,7 @@ def generate_time_series_data(
     state_vector = np.zeros((1, timesteps + 1))
     state_vector[:, 0] = initial_state
 
+    # Calculate the output of the size (1,N)
     for k in range(timesteps):
         state_vector[:, k+1] = A @ state_vector[:, k] + B @ input_signal[:, k] + noise_signal[:, k]
 
@@ -62,7 +63,7 @@ def generate_time_series_data(
     np.save(os.path.join(output_path, f"{base_filename}_noise.npy"), noise_signal)
     
 
-    # Optional: Return data in case it's needed immediately for further processing
+    # Return data in case it's needed immediately for further processing
     return state_vector, input_signal, noise_signal
     
 
@@ -108,12 +109,12 @@ def generate_iid_samples(
     w_std = params_config.get('w_std_dev', 0.01)
 
     # 3. Generate N independent samples for x, u, and w
-    # We generate column vectors of size (N, 1)
-    x = rng.normal(loc=0, scale=x_std, size=(N, 1))
-    u = rng.normal(loc=0, scale=u_std, size=(N, 1))
-    w = rng.normal(loc=0, scale=w_std, size=(N, 1))
+    # We generate column vectors of size (1,N)
+    x = rng.normal(loc=0, scale=x_std, size=(1, N))
+    u = rng.normal(loc=0, scale=u_std, size=(1, N))
+    w = rng.normal(loc=0, scale=w_std, size=(1, N))
 
-    # 4. Calculate the output y 
+    # 4. Calculate the output y of the size (1,N)
     y = a * x + b * u + w
 
     # 5. Save the generated data arrays
@@ -124,5 +125,5 @@ def generate_iid_samples(
     np.save(os.path.join(output_path, f"{base_filename}_w_samples.npy"), w)
     np.save(os.path.join(output_path, f"{base_filename}_y_output.npy"), y)
 
-
+     # Return data in case it's needed immediately for further processing
     return x, u, w, y

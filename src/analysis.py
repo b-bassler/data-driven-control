@@ -3,57 +3,46 @@ from typing import Dict, Tuple
 from scipy.linalg import sqrtm
 import math
 
-
-def calculate_tsiams_ellipse_matrix(
-    state_data: np.ndarray,
-    input_data: np.ndarray,
-    true_A: np.ndarray,
-    true_B: np.ndarray,
-    sigmas: Dict[str, float],
-    delta: float,
-    c: float,
-    tau: int
-) -> Dict[str, np.ndarray]:
+def calculate_p_matrix_ddbounds_iid(
+    x_data: np.ndarray, 
+    u_data: np.ndarray, 
+    w_std_dev: float, 
+    delta: float = 0.05,
+    tuning_factor: float = 1.0   
+) -> np.ndarray:
     """
-    Calculates the characteristic matrix P for the Tsiams data-dependent ellipse.
+    Calculates the shape matrix P for the confidence ellipse based on
+    data-dependent bounds (Dean et al., Proposition 2.4). 
+
+    Args:
+        x_data (np.ndarray): Array of state data with shape (n, N).
+        u_data (np.ndarray): Array of input data with shape (p, N).
+        w_std_dev (float): The standard deviation of the noise (sigma_w).
+        delta (float): The confidence level (e.g., 0.05 for 95%).
+        tuning_factor (float, optional): A factor to scale the conservatism.
+                                       Defaults to 1.0.
+
+    Returns:
+        np.ndarray: The calculated (n+p)x(n+p) P-matrix for the ellipse.
     """
-    T = input_data.shape[1]
+    # Read feature dimensions from the number of rows (shape[0]).
+    n_dim = x_data.shape[0]
+    p_dim = u_data.shape[0]
+
+    # The theoretical constant C from Proposition 2 
+    C_theory = w_std_dev**2 * (np.sqrt(n_dim + p_dim) + np.sqrt(n_dim) + np.sqrt(2 * np.log(1/delta)))**2
+    C_const = C_theory * tuning_factor
+
+    # Shape of Z is (n+p, N).
+    Z = np.vstack([x_data, u_data])
+    T
+    # Shape is (n+p, N) @ (N, n+p) = (n+p, n+p).
+    gram_matrix = Z @ Z.T
+
+    # The shape matrix P of the ellipse is the scaled Gram matrix.
+    p_ellipse = gram_matrix / C_const
     
-    # Calculate V_t from the measurement data
-    V_t = np.array([
-        [np.vdot(state_data, state_data), np.vdot(state_data, input_data)],
-        [np.vdot(input_data, state_data), np.vdot(input_data, input_data)]
-    ])
-
-    # Calculate the state covariance matrix T_t using TRUE system parameters
-    T_t = np.zeros_like(true_A)
-    M = (sigmas['u']**2) * (true_B @ true_B.T) + (sigmas['w']**2)
-    t_summation = tau // 2 # In the script, t was defined as 2 for tau=2
-    for k in range(t_summation):
-        Ak = np.linalg.matrix_power(true_A, k)
-        T_t += Ak @ M @ Ak.T
-    
-    n_dim = T_t.shape[0]
-    T_t_dach = np.block([[T_t, np.zeros((n_dim, n_dim))],
-                         [np.zeros((n_dim, n_dim)), (sigmas['u']**2) * np.eye(n_dim)]])
-
-    V = c * tau * math.floor(T / tau) * T_t_dach
-    V_dach = V_t + V
-
-    # Calculate the radius of the uncertainty ball
-    log_term = np.log(
-        (np.sqrt(np.linalg.det(V_dach)) / np.sqrt(np.linalg.det(V))) * (5**n_dim / delta)
-    )
-    norm_term_sq = np.linalg.norm(sqrtm(V_dach) @ np.linalg.inv(sqrtm(V_t)), ord=2)**2
-    radius = 8 * (sigmas['w']**2) * log_term * norm_term_sq
-
-    # The characteristic matrix of the ellipse
-    p_matrix = V_dach / radius
-    
-    return {'p_matrix': p_matrix}
-
-
-
+    return p_ellipse
 
 
 
@@ -95,8 +84,8 @@ def calculate_p_matrix_ddbounds_iid(
     C_const = C_theory * tuning_factor
 
     # Gram matrix Z^T * Z
-    Z = np.hstack([x_data, u_data])
-    gram_matrix = Z.T @ Z
+    Z = np.vstack([x_data, u_data])
+    gram_matrix = Z @ Z.T
 
     # Shape matrix P of the ellipse
     p_ellipse = gram_matrix / C_const
@@ -228,9 +217,6 @@ class ConfidenceEllipse:
         self.center = np.array(center)
         self.p_matrix = p_matrix
 
-        # --- CRITICAL CORRECTION: Pre-calculate the covariance matrix ---
-        # The covariance matrix is the inverse of the shape matrix P.
-        # It is calculated once here and stored as an attribute for all methods to use.
         try:
             self.covariance_matrix = np.linalg.inv(self.p_matrix)
         except np.linalg.LinAlgError:
@@ -240,8 +226,6 @@ class ConfidenceEllipse:
 
     def area(self) -> float:
         """Calculates the total area of the ellipse."""
-        # This formula is direct and robust: Area = pi * sqrt(det(P_inv))
-        # It relies on the pre-calculated covariance_matrix.
         return np.pi * np.sqrt(np.linalg.det(self.covariance_matrix))
 
     def worst_case_deviation(self) -> float:
@@ -259,19 +243,29 @@ class ConfidenceEllipse:
         This is correctly and directly calculated from the diagonal of the
         pre-calculated covariance matrix.
         """
-        # This now works because self.covariance_matrix was created in __init__
         max_dev_a = np.sqrt(self.covariance_matrix[0, 0])
         max_dev_b = np.sqrt(self.covariance_matrix[1, 1])
         
         return {"max_dev_a": max_dev_a, "max_dev_b": max_dev_b}
 
-    def contains(self, point: Tuple[float, float]) -> bool:
+    def contains(self, point: tuple) -> bool:
         """
-        Checks if a given point is inside the ellipse using the quadratic form.
+        Checks if a given point is inside the confidence ellipse.
+
+        The check is based on the quadratic form: (p - c)^T * P * (p - c) <= 1,
+        where p is the point, c is the center, and P is the shape matrix.
+
+        Args:
+            point (tuple): The (a, b) coordinates of the point to check.
+
+        Returns:
+            bool: True if the point is inside or on the boundary of the ellipse.
         """
-        point_vec = np.array(point)
-        diff = (point_vec - self.center).reshape(2, 1)
+        point_vec = np.asarray(point).reshape(-1, 1)
+        center_vec = np.asarray(self.center).reshape(-1, 1)
+        
+        diff = point_vec - center_vec
+        
         value = diff.T @ self.p_matrix @ diff
+        
         return value.item() <= 1
-
-

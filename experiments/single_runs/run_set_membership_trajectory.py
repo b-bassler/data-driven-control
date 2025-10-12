@@ -11,7 +11,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 sys.path.append(project_root)
 
 # --- 1. Imports from our src library (using absolute paths from project root) ---
-from src.data_generation import generate_time_series_data
+from src.data_generation import generate_trajectory_data
 from src.set_membership import calculate_ellipse_from_qmi
 from src.analysis import ConfidenceEllipse
 from src.plotting import plot_qmi_ellipse 
@@ -40,7 +40,7 @@ def run_qmi_analysis_experiment():
 
     # === 4. Generate the dataset for this run
     print(f"\nStep 1: Generating time-series data with T={T}...")
-    state_data, input_data, _ = generate_time_series_data(
+    state_data, input_data, _ = generate_trajectory_data(
         system_params=TRUE_PARAMS, timesteps=T,
         output_path=GENERATED_DATA_DIR,  
         base_filename=f"temp_qmi_data_T{T}",

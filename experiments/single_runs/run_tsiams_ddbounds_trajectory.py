@@ -11,9 +11,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..
 sys.path.append(project_root)
 
 # Import all required tools
-from src.data_generation import generate_time_series_data
-from src.system_identification import estimate_least_squares_timeseries
-from src.analysis import calculate_tsiams_ellipse_matrix, ConfidenceEllipse
+from src.data_generation import generate_trajectory_data
+from src.system_identification import estimate_least_squares_trajectory
+from src.analysis import calculate_p_matrix_trajectory, ConfidenceEllipse
 from src.plotting import plot_tsiams_ellipse
 
 # Define project paths
@@ -39,7 +39,7 @@ def run_tsiams_analysis_experiment():
 
     # === 1. Data Generation ===
     print(f"\nStep 1: Generating time-series data with T={T}...")
-    state_data, input_data, _ = generate_time_series_data(
+    state_data, input_data, _ = generate_trajectory_data(
         system_params=TRUE_PARAMS, 
         timesteps=T, 
         output_path=GENERATED_DATA_DIR, 
@@ -72,12 +72,12 @@ def run_tsiams_analysis_experiment():
     
     # === 2. Initial LS Estimation (to find the center) ===
     print("\nStep 2: Performing initial Least-Squares estimation...")
-    A_est, B_est = estimate_least_squares_timeseries(np.array([state_data.flatten()]), np.array([input_data.flatten()]))
+    A_est, B_est = estimate_least_squares_trajectory(np.array([state_data.flatten()]), np.array([input_data.flatten()]))
     estimated_params = (A_est.item(), B_est.item())
     
     # === 3. Calculate Tsiams Ellipse Matrix ===
     print("\nStep 3: Calculating Tsiams ellipse matrix...")
-    tsiams_results = calculate_tsiams_ellipse_matrix(
+    tsiams_results = calculate_p_matrix_trajectory(
         state_data=state_data[:, :T], 
         input_data=input_data,
         true_A=np.array([[TRUE_PARAMS['a']]]), 

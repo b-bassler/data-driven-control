@@ -1,33 +1,22 @@
 
-# Kompilierte Python-Dateien und Caches ignorieren
+
 __pycache__/
 *.pyc
 
 
-# ===============================================
-# Projekt-spezifische Ordner, die ignoriert werden
-# ===============================================
 
 data/generated/
 
-# Plots und Tabellen
+
 results/
 
-
-# ================================================================
-# Archivierte Ordner
-# ================================================================
 Data_old/
 analysis_old/
 results_old/
 
 
-# ===============================================
-# Editor-spezifische Konfigurationsdateien
-# ===============================================
 .vscode/
 
-#venv ignorieren
 .venv/
 venv/
 

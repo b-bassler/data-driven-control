@@ -33,11 +33,11 @@ def run_data_dependent_bounds_experiment():
     print("--- Starting Single Run: Data-Dependent Bounds (I.I.D.) ---")
 
     # === 3. Central configuration for the entire experiment ===
-    # CORRECTED: We only need ONE parameter for the number of data points.
     T = 100
     DATA_SEED = 2 # Consistent seed for comparison
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
+    TRUE_PARAMS_TUPLE = tuple(TRUE_PARAMS.values())
     NOISE_STD_DEV = 0.1
     CONFIDENCE_DELTA = 0.05
 
@@ -52,14 +52,18 @@ def run_data_dependent_bounds_experiment():
     }
     x_samples, u_samples, _, y_samples = generate_iid_samples(**generation_config)
     
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 01713e321fe2e67500bf3566db3fe535e1f03ddf
     # 5. Perform least-squares estimation 
     print("\nStep 2: Performing least-squares estimation...")
-    A_est_mat, B_est_mat = estimate_least_squares_iid(x_samples, u_samples, y_samples)
-    if A_est_mat is None:
+    A_est, B_est = estimate_least_squares_iid(x_samples, u_samples, y_samples)
+    if A_est is None:
         print("Estimation failed. Aborting experiment.")
         return
-    estimated_params = (A_est_mat[0, 0], B_est_mat[0, 0])
+    estimated_params = (A_est[0, 0], B_est[0, 0])
     print(f"-> Estimated Parameters: a_hat = {estimated_params[0]:.4f}, b_hat = {estimated_params[1]:.4f}")
 
     # === 6. Analyze confidence ellipse ===
@@ -67,7 +71,11 @@ def run_data_dependent_bounds_experiment():
     
     # Calculate the P-matrix, which defines the ellipse's shape
     p_matrix = calculate_p_matrix_ddbounds_iid(x_samples, u_samples, NOISE_STD_DEV, CONFIDENCE_DELTA)
-    
+
+
+    ellipse_dd = ConfidenceEllipse(center=(A_est.item(), B_est.item()), p_matrix=p_matrix)
+    if not ellipse_dd.contains(TRUE_PARAMS_TUPLE):
+                print("Lies outside")
     # Instantiate the ConfidenceEllipse to access its metric methods
     ellipse = ConfidenceEllipse(center=estimated_params, p_matrix=p_matrix)
 
