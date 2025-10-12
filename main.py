@@ -10,9 +10,9 @@ DATA_DIR = os.path.join(BASE_DIR, 'data')
 # --- Import all available experiment functions ---
 from experiments.single_runs.run_dean_ddbounds_iid import run_data_dependent_bounds_experiment
 from experiments.single_runs.run_bootstrap_trajectory import run_bootstrap_dean_trajectory
-from experiments.single_runs.run_set_membership_trajectory import run_qmi_analysis_experiment
+from experiments.single_runs.run_set_membership_trajectory import run_set_membership_iid_experiment
 from experiments.single_runs.run_tsiams_ddbounds_trajectory import run_tsiams_analysis_experiment
-from experiments.single_runs.run_set_membership_iid import run_qmi_iid_stochastic_experiment
+from experiments.single_runs.run_set_membership_iid import run_set_memnership_iid_experiment
 from experiments.single_runs.run_bootstrap_iid import run_bootstrap_dean_iid
 from experiments.run_dd_bounds_calibration import run_dd_bounds_calibration_experiment
 from experiments.run_coverage_iid import run_coverage_iid_over_T
@@ -32,12 +32,9 @@ def main():
     # Define the main argument that selects the experiment
     parser.add_argument(
         "experiment", 
-        choices=['dd-bounds', 'bootstrap-dean', 'set-membership', 'qmi-ellipse',
-                 'sysid-compare', 'final-comparison', 
-                 'mc-sysid-compare', 'mc-final-compare', 'coverage-test',
-                 'coverage-over-t', 'calibrate-dd', 'bootstrap-validation',
-                 'bootstrap-iid-validation', 'sysid-methods-compare',
-                 'coverage-variance', 'bootstrap-setmembership-meta', 'tsiamis-bounds', 'trajectory-comparison', 'iid-comparison'], 
+        choices=['dd_bounds_trajectory', 'dd_bounds_iid','set_membership_iid', 
+                 'set_membership_trajectory', 'bootstrap_iid','bootstrap_trajectory',  
+                 'trajectory_comparison', 'iid_comparison', 'coverage_iid', 'dd_bounds_calibration'], 
         help="The name of the experiment to run."
     )
     
@@ -70,20 +67,26 @@ def main():
     # --- Dispatcher: Call the correct function based on the user's choice ---
     print(f"\n--- Starting experiment: '{args.experiment}' ---")
     
-    if args.experiment == 'dd-bounds':
+    if args.experiment == 'dd_bounds_trajectory':
         run_data_dependent_bounds_experiment()
-    elif args.experiment == 'bootstrap-dean':
-        run_bootstrap_dean_trajectory()
-    elif args.experiment == 'qmi-ellipse':
-        run_qmi_analysis_experiment()
-    elif args.experiment == 'calibrate-dd':
-        run_dd_bounds_calibration_experiment()
-    elif args.experiment == 'tsiamis-bounds': 
+    elif args.experiment == 'dd_bounds_iid':
         run_tsiams_analysis_experiment()
-    elif args.experiment == 'trajectory-comparison':
+    elif args.experiment == 'set_membership_iid':
+        run_set_memnership_iid_experiment()
+    elif args.experiment == 'set_membership_trajectory':
+        run_set_membership_iid_experiment()
+    elif args.experiment == 'bootstrap_iid': 
+        run_bootstrap_dean_iid()
+    elif args.experiment == 'bootstrap_trajectory':
+        run_bootstrap_dean_trajectory()
+    elif args.experiment == 'trajectory_comparison':
         run_mc_trajectory_comparison(num_mc_runs=args.runs)
-    elif args.experiment == 'iid-comparison':
+    elif args.experiment == 'iid_comparison':
         run_mc_iid_comparison(num_mc_runs=args.runs)
+    elif args.experiment == 'coverage_iid':
+        run_coverage_iid_over_T()
+    elif args.experiment == 'dd_bounds_calibration':
+        run_dd_bounds_calibration_experiment()
     else:
         print(f"Error: Unknown experiment '{args.experiment}'")
 

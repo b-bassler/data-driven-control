@@ -30,7 +30,7 @@ os.makedirs(RESULTS_DIR_METHOD, exist_ok=True)
 os.makedirs(GENERATED_DATA_DIR, exist_ok=True)
 
 
-def run_qmi_iid_stochastic_experiment():
+def run_set_memnership_iid_experiment():
     """ Orchestrates a single run of the QMI-based Set-Membership analysis. """
     print("--- Starting Single Run: Set-Membership (I.I.D.) ---")
 
@@ -52,7 +52,7 @@ def run_qmi_iid_stochastic_experiment():
         output_path=GENERATED_DATA_DIR, base_filename=f"temp_qmi_stochastic_data_N{N}",
         seed=DATA_SEED
     )
-    X_plus, X_minus, U_minus = y_col.T, x_col.T, u_col.T
+    X_plus, X_minus, U_minus = y_col, x_col, u_col
 
     # === 5. QMI Ellipse Calculation ===
     print("\nStep 2: Calculating ellipse from QMI (stochastic formulation)...")
@@ -116,4 +116,4 @@ def run_qmi_iid_stochastic_experiment():
 
 
 if __name__ == '__main__':
-    run_qmi_iid_stochastic_experiment()
+    run_set_memnership_iid_experiment()

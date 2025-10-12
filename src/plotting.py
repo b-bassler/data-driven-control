@@ -305,7 +305,10 @@ def plot_mc_metric_comparison(
     including a shaded area for +/- one standard deviation, based on a config list.
     """
     fig, ax = plt.subplots(figsize=(12, 7))
-    
+    TITLE_FONTSIZE = 25
+    LABEL_FONTSIZE = 20
+    LEGEND_FONTSIZE = 16
+    TICK_FONTSIZE = 15
     # The x-axis is the index of the summary DataFrame, which is 'T'
     x_values = summary_df.index
 
@@ -333,10 +336,15 @@ def plot_mc_metric_comparison(
             print(f"Warning: Columns for '{config['col']}' not found in summary DataFrame. Skipping plot line.")
 
 
-    ax.set_xlabel(f"Number of Data Points ({x_col_name})")
-    ax.set_ylabel(y_label)
-    ax.set_title(title)
+
     ax.legend()
+    ax.set_xlabel(f"Number of Data Points ({x_col_name})", fontsize=LABEL_FONTSIZE) 
+    ax.set_ylabel(y_label, fontsize=LABEL_FONTSIZE) 
+    ax.set_title(title, fontsize=TITLE_FONTSIZE) 
+    ax.legend(fontsize=LEGEND_FONTSIZE) 
+    
+    # NEU: Diese Zeile passt die Größe der Zahlen auf den Achsen an
+    ax.tick_params(axis='both', which='major', labelsize=TICK_FONTSIZE) 
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
     ax.set_yscale('log')
     

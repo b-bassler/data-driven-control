@@ -35,7 +35,7 @@ def calculate_p_matrix_ddbounds_iid(
 
     # Shape of Z is (n+p, N).
     Z = np.vstack([x_data, u_data])
-    T
+    
     # Shape is (n+p, N) @ (N, n+p) = (n+p, n+p).
     gram_matrix = Z @ Z.T
 
@@ -45,55 +45,58 @@ def calculate_p_matrix_ddbounds_iid(
     return p_ellipse
 
 
-
-
-
-
-def calculate_p_matrix_ddbounds_iid(
-    x_data: np.ndarray, 
-    u_data: np.ndarray, 
-    w_std_dev: float, 
-    delta: float = 0.05,
-    tuning_factor: float = 1.0  
-) -> np.ndarray:
+def calculate_p_matrix_trajectory(
+    state_data: np.ndarray,
+    input_data: np.ndarray,
+    true_A: np.ndarray,
+    true_B: np.ndarray,
+    sigmas: Dict[str, float],
+    delta: float,
+    c: float,
+    tau: int
+) -> Dict[str, np.ndarray]:
     """
-    Calculates the shape matrix P for the confidence ellipse of the data dependent
-    bounds (Dean et al. Proposition 2.4). Includes an optional tuning factor
-    to scale the conservatism of the bounds.
-
-    Args:
-        x_data (np.ndarray): Array of state data used in the estimation.
-        u_data (np.ndarray): Array of input data used in the estimation.
-        w_std_dev (float): The standard deviation of the noise (sigma_w).
-        delta (float): The confidence level delta (e.g., 0.05 for 95%).
-        tuning_factor (float, optional): A factor to scale the constant C. 
-                                         Defaults to 1.0 (original formulation).
-                                         Values < 1.0 lead to smaller, less
-                                         conservative ellipses.
-
-    Returns:
-        np.ndarray: The calculated 2x2 P-matrix for the ellipse.
+    Calculates the characteristic matrix P for the Tsiams data-dependent ellipse.
     """
-    n_dim = x_data.shape[1]
-    p_dim = u_data.shape[1]
+    T = input_data.shape[1]
 
-    # Theoretical constant C from Proposition 2.4
-    C_theory = w_std_dev**2 * (np.sqrt(n_dim + p_dim) + np.sqrt(n_dim) + np.sqrt(2 * np.log(1/delta)))**2
+    # Calculate V_t from the measurement data
+    V_t = np.array([
+        [np.vdot(state_data, state_data), np.vdot(state_data, input_data)],
+        [np.vdot(input_data, state_data), np.vdot(input_data, input_data)]
+    ])
 
-    # Apply the tuning factor to the theoretical constant
-    C_const = C_theory * tuning_factor
+    # Calculate the state covariance matrix T_t using TRUE system parameters
+    T_t = np.zeros_like(true_A)
+    M = (sigmas['u']**2) * (true_B @ true_B.T) + (sigmas['w']**2)
+    t_summation = tau // 2 # In the script, t was defined as 2 for tau=2
+    for k in range(t_summation):
+        Ak = np.linalg.matrix_power(true_A, k)
+        T_t += Ak @ M @ Ak.T
 
-    # Gram matrix Z^T * Z
-    Z = np.vstack([x_data, u_data])
-    gram_matrix = Z @ Z.T
+    n_dim = T_t.shape[0]
+    T_t_dach = np.block([[T_t, np.zeros((n_dim, n_dim))],
+                         [np.zeros((n_dim, n_dim)), (sigmas['u']**2) * np.eye(n_dim)]])
 
-    # Shape matrix P of the ellipse
-    p_ellipse = gram_matrix / C_const
-    
-    return p_ellipse
+    V = c * tau * math.floor(T / tau) * T_t_dach
+    V_dach = V_t + V
 
+    # Calculate the radius of the uncertainty ball
+    log_term = np.log(
+        (np.sqrt(np.linalg.det(V_dach)) / np.sqrt(np.linalg.det(V))) * (5**n_dim / delta)
+    )
+    norm_term_sq = np.linalg.norm(sqrtm(V_dach) @ np.linalg.inv(sqrtm(V_t)), ord=2)**2
+    # Calculate the radius of the uncertainty ball
+    log_term = np.log(
+        (np.sqrt(np.linalg.det(V_dach)) / np.sqrt(np.linalg.det(V))) * (5**n_dim / delta)
+    )
+    norm_term_sq = np.linalg.norm(sqrtm(V_dach) @ np.linalg.inv(sqrtm(V_t)), ord=2)**2
+    radius = 8 * (sigmas['w']**2) * log_term * norm_term_sq
 
+    # The characteristic matrix of the ellipse
+    p_matrix = V_dach / radius
 
+    return {'p_matrix': p_matrix}
 #----------------------------------------------------------------------------------------------
 
 

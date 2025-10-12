@@ -34,9 +34,9 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
     Orchestrates the full comparison of all three methods for a single master data seed.
     """
     # === 3. Central Configuration ===
-    N_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
+    N_RANGE = [10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
     
-    TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
+    TRUE_PARAMS = {'a': 0.99, 'b': 0.5}
     NOISE_STD_DEV_W = 0.1
     INPUT_STD_DEV_U = 1.0
     CONFIDENCE_DELTA = 0.05
@@ -76,13 +76,6 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
             print(f"Warning: DD-Bounds failed for T={N}, Seed={data_seed} with error: {e}")
 
 
-        # state_ts_raw, input_ts_raw, _ = generate_time_series_data(
-        #     system_params=TRUE_PARAMS, timesteps=T, 
-        #     output_path=GENERATED_DATA_DIR, base_filename=f"temp_timeseries_T{T}",
-        #     noise_config={'distribution': 'gaussian', 'std_dev': NOISE_STD_DEV_W}, seed=current_seed
-        # )
-        # state_ts, input_ts = np.array([state_ts_raw.flatten()]), np.array([input_ts_raw.flatten()])
-
         # --- Pipeline 2: Bootstrap Dean on i.i.d. data ---
         try:
             A_est_bs, B_est_bs = estimate_least_squares_iid(x_iid, u_iid, y_iid)
@@ -110,7 +103,7 @@ def run_final_comparison_experiment(data_seed: int) -> pd.DataFrame:
 
         # --- Pipeline 3: Set Membership via direct QMI on i.i.d. data ---
         try:
-            X_plus, X_minus, U_minus = y_iid.T, x_iid.T, u_iid.T
+            X_plus, X_minus, U_minus = y_iid, x_iid, u_iid
             c_delta = chi2.ppf(1 - CONFIDENCE_DELTA, df=DEGREES_OF_FREEDOM)
             Phi11 = (NOISE_STD_DEV_W**2) * c_delta * np.eye(1); Phi12 = np.zeros((1, N)); Phi21 = Phi12.T
             Z_reg = np.vstack([X_minus, U_minus])
@@ -221,35 +214,35 @@ def run_mc_iid_comparison(num_mc_runs: int = 10):
     # --- Plot configuration for Area ---
     area_configs = [
         {'col': 'dd_bounds_area', 'label': 'Data-Dependent', 'color': 'blue', 'marker': 'o'},
-        {'col': 'bootstrap_area', 'label': 'Bootstrap', 'color': 'orange', 'marker': 'x'},
-        {'col': 'set_membership_area', 'label': 'Set Membership (QMI)', 'color': 'green', 'marker': 's'}
+        {'col': 'bootstrap_area', 'label': 'Bootstrap', 'color': 'red', 'marker': 'x'},
+        {'col': 'set_membership_area', 'label': 'Set Membership ', 'color': 'green', 'marker': 's'}
     ]
-    plot_mc_metric_comparison(summary_df, area_configs, 'T', 'Mean Area (log scale)', 
+    plot_mc_metric_comparison(summary_df, area_configs, 'N', 'Mean Area', 
                               'Monte Carlo: Mean Area Comparison', 
-                              os.path.join(figures_dir, "mc_iid_comparison_area.png"))
+                              os.path.join(figures_dir, "mc_iid_comparison_area.pdf"))
     
     # --- Plot configuration for Worst-Case Deviation ---
     wcd_configs = [
         {'col': 'dd_bounds_wcd', 'label': 'Data-Dependent', 'color': 'blue', 'marker': 'o'},
-        {'col': 'bootstrap_wcd', 'label': 'Bootstrap', 'color': 'orange', 'marker': 'x'},
+        {'col': 'bootstrap_wcd', 'label': 'Bootstrap', 'color': 'red', 'marker': 'x'},
         {'col': 'set_membership_wcd', 'label': 'Set Membership (QMI)', 'color': 'green', 'marker': 's'}
     ]
-    plot_mc_metric_comparison(summary_df, wcd_configs, 'T', 'Mean WCD (log scale)', 
+    plot_mc_metric_comparison(summary_df, wcd_configs, 'N', 'Mean WCD', 
                               'Monte Carlo: Mean WCD Comparison', 
-                              os.path.join(figures_dir, "mc_iid_comparison_wcd.png"))
+                              os.path.join(figures_dir, "mc_iid_comparison_wcd.pdf"))
 
     # --- Plot configuration for Max Deviation in 'a' and 'b' ---
     max_dev_configs = [
         {'col': 'dd_bounds_max_dev_a', 'label': 'DD-Bounds (a)', 'color': 'blue', 'marker': 'o', 'linestyle': '-'},
-        {'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a)', 'color': 'orange', 'marker': 'x', 'linestyle': '-'},
+        {'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a)', 'color': 'red', 'marker': 'x', 'linestyle': '-'},
         {'col': 'set_membership_max_dev_a', 'label': 'Set Membership (a)', 'color': 'green', 'marker': 's', 'linestyle': '-'},
         {'col': 'dd_bounds_max_dev_b', 'label': 'DD-Bounds (b)', 'color': 'blue', 'marker': 'o', 'linestyle': '--'},
-        {'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (b)', 'color': 'orange', 'marker': 'x', 'linestyle': '--'},
+        {'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (b)', 'color': 'red', 'marker': 'x', 'linestyle': '--'},
         {'col': 'set_membership_max_dev_b', 'label': 'Set Membership (b)', 'color': 'green', 'marker': 's', 'linestyle': '--'}
     ]
-    plot_mc_metric_comparison(summary_df, max_dev_configs, 'T', 'Mean Max Deviation (log scale)', 
+    plot_mc_metric_comparison(summary_df, max_dev_configs, 'N', 'Mean Max Deviation', 
                               'Monte Carlo: Mean Max Deviation for "a" and "b"', 
-                              os.path.join(figures_dir, "mc_iid_comparison_dev_a_and_b.png"))
+                              os.path.join(figures_dir, "mc_iid_comparison_dev_a_and_b.pdf"))
 
     print("\n--- FINAL Monte Carlo Simulation Finished Successfully! ---")
 

@@ -23,7 +23,7 @@ RESULTS_DIR = os.path.join(BASE_DIR, 'results')
 GENERATED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'generated')
 
 
-def run_qmi_analysis_experiment():
+def run_set_membership_iid_experiment():
     """
     Orchestrates a single run of the QMI-based Set Membership analysis.
     """
@@ -140,4 +140,4 @@ def run_qmi_analysis_experiment():
 
 
 if __name__ == '__main__':
-    run_qmi_analysis_experiment()
+    run_set_membership_iid_experiment()
