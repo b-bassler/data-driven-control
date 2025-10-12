@@ -52,11 +52,7 @@ def run_data_dependent_bounds_experiment():
     }
     x_samples, u_samples, _, y_samples = generate_iid_samples(**generation_config)
     
-<<<<<<< HEAD
-
-=======
     
->>>>>>> 01713e321fe2e67500bf3566db3fe535e1f03ddf
     # 5. Perform least-squares estimation 
     print("\nStep 2: Performing least-squares estimation...")
     A_est, B_est = estimate_least_squares_iid(x_samples, u_samples, y_samples)
