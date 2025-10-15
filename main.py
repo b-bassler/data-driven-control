@@ -18,6 +18,7 @@ from experiments.run_dd_bounds_calibration import run_dd_bounds_calibration_expe
 from experiments.run_coverage_iid import run_coverage_iid_over_T
 from experiments.run_mc_trajectory import run_mc_trajectory_comparison
 from experiments.run_mc_iid import run_mc_iid_comparison
+from experiments.run_coverage_trajectory import run_coverage_trajectory_over_T
 
 
 def main():
@@ -34,7 +35,7 @@ def main():
         "experiment", 
         choices=['dd_bounds_trajectory', 'dd_bounds_iid','set_membership_iid', 
                  'set_membership_trajectory', 'bootstrap_iid','bootstrap_trajectory',  
-                 'trajectory_comparison', 'iid_comparison', 'coverage_iid', 'dd_bounds_calibration'], 
+                 'trajectory_comparison', 'iid_comparison', 'coverage_iid', 'coverage_trajectory', 'dd_bounds_calibration'], 
         help="The name of the experiment to run."
     )
     
@@ -87,6 +88,8 @@ def main():
         run_coverage_iid_over_T()
     elif args.experiment == 'dd_bounds_calibration':
         run_dd_bounds_calibration_experiment()
+    elif args.experiment == 'coverage_trajectory':
+        run_coverage_trajectory_over_T()
     else:
         print(f"Error: Unknown experiment '{args.experiment}'")
 

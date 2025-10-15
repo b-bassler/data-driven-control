@@ -129,7 +129,7 @@ def perform_coverage_run_trajectory(T: int, num_mc_runs: int = 10) -> Dict[str, 
 # This block allows the script to be run directly for a single test run
 if __name__ == '__main__':
     # Perform a single run with a default T and number of runs
-    results = perform_coverage_run_trajectory(T=100, num_mc_runs=100)
+    results = perform_coverage_run_trajectory(T=100, num_mc_runs=10)
 
     # Display the results in a formatted table
     print("\n--- Coverage Validation Results ---")
@@ -154,8 +154,8 @@ def run_coverage_trajectory_over_T():
     print("--- Starting Coverage Validation over a range of T ---")
     
     # Configuration 
-    T_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
-    NUM_MC_RUNS_PER_T = 100 # Number of MC runs for each T-value
+    T_RANGE = [ 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
+    NUM_MC_RUNS_PER_T = 10 # Number of MC runs for each T-value
     CONFIDENCE_DELTA = 0.05 #for plot only, delta config in run_coverage_validation.py
 
     #Loop over T 
