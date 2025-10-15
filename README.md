@@ -1,6 +1,7 @@
 # System Identification and Uncertainty Quantification for LTI Systems
 
-This repository contains the source code for the bachelor's thesis, "[Your Thesis Title Here]". The project implements and conducts a comparative analysis of several system identification techniques for Linear Time-Invariant (LTI) systems, focusing on the distinction between methods based on trajectory data versus those based on independent and identically distributed (i.i.d.) samples.
+This repository contains the source code for the bachelor's thesis, "Comparison of the impact of measurement
+uncertainties on data-driven control". The project implements and conducts a comparative analysis of several system identification and Set Membership techniques for Linear Time-Invariant (LTI) systems, focusing on the distinction between methods based on trajectory data versus those based on independent and identically distributed (i.i.d.) samples.
 
 ---
 
@@ -12,8 +13,8 @@ The codebase is organized into a modular architecture to ensure a clear separati
 .
 ├── experiments/      # Contains all executable experiment scripts
 │   ├── single_runs/  # Scripts for isolated test runs of individual methods
-│   └── ...           # Scripts for meta-analyses (Monte Carlo, Coverage)
-├── reporting/        # Scripts for post-simulation analysis and visualization
+│   └── ...           
+├── analysis/        # Scripts for post-simulation analysis and visualization
 ├── src/              # Core library with all reusable functions and classes
 ├── results/          # Output directory for all generated artifacts (CSVs, plots)
 ├── data/             # Directory for temporary, generated datasets
