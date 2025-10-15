@@ -20,6 +20,8 @@ from src.analysis import ConfidenceEllipse
 from src.plotting import plot_qmi_ellipse
 
 
+
+
 # === 2. Path and Directory Definitions ===
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # This directory is for method-specific results (like individual plots/metrics)
@@ -35,10 +37,10 @@ def run_set_memnership_iid_experiment():
     print("--- Starting Single Run: Set-Membership (I.I.D.) ---")
 
     # === 3. Central Configuration for the Experiment ===
-    N = 200
-    DATA_SEED = 2 
+    N = 100
+    DATA_SEED = 10 
 
-    TRUE_PARAMS = {'a': 0.99, 'b': 0.5}
+    TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     PARAMS_CONFIG = {
         'x_std_dev': 1.0, 'u_std_dev': 1.0, 'w_std_dev': 0.1
     }

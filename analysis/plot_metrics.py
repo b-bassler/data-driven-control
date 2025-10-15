@@ -2,11 +2,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse, Rectangle
 
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "sans-serif",
+    "text.latex.preamble": r"""
+        \usepackage[T1]{fontenc}
+        \usepackage[light]{firasans}
+        \usepackage{amsmath}
+    """,
+})
+
+
 def create_ellipse_plot(output_path="conceptual_ellipse_metrics.pdf"):
         """
         Creates a compact, standalone plot for the elliptical uncertainty region and its metrics.
         """
-        fig, ax = plt.subplots(figsize=(6, 6)) # Square figure for compact layout
+        fig, ax = plt.subplots(figsize=(7.5, 7.5)) # Square figure for compact layout
 
         # --- Define Parameters ---
         true_params = np.array([0, 0])
@@ -61,22 +72,18 @@ def create_ellipse_plot(output_path="conceptual_ellipse_metrics.pdf"):
 
         cx, cy = center_ellipse
 
-        # Horizontale Linie für delta_a_max (JETZT DURCHGEZOGEN)
+
         ax.plot([cx, cx + delta_a_max], [cy, cy], color='black', linestyle='-', lw=1) # linestyle='-' für durchgezogen
 
-        # Vertikale Linie für delta_b_max (JETZT DURCHGEZOGEN)
+     
         ax.plot([cx, cx], [cy, cy + delta_b_max], color='black', linestyle='-', lw=1) # linestyle='-' für durchgezogen
 
-        # Optional: Text-Labels hinzufügen (Position angepasst)
-        # delta_a_max Beschriftung: Näher an cy, z.B. cy + 0.01 (leicht über der Linie) oder cy - 0.02 (leicht unter der Linie)
-        # Je nach dem, ob du sie innen oder außen an der Linie haben möchtest.
-        # Ich setze sie hier leicht über die Linie.
-        ax.text(cx + delta_a_max / 2, cy - 0.01, r'$\Delta A_{\mathrm{max}}$', 
-                ha='center', va='bottom', fontsize=12, color='black')
+        ax.text(cx + delta_a_max / 2, cy + 0.003, r'$\Delta A_{\mathrm{max}}$', 
+                ha='center', va='bottom', fontsize=18, color='black')
 
         # delta_b_max Beschriftung: Näher an cx, z.B. cx + 0.01 (leicht rechts von der Linie)
-        ax.text(cx - 0.01, cy + delta_b_max / 2, r'$\Delta B_{\mathrm{max}}$', 
-                ha='left', va='center', fontsize=12, rotation='vertical', color='black')
+        ax.text(cx + 0.003, cy + delta_b_max / 2, r'$\Delta B_{\mathrm{max}}$', 
+                ha='left', va='center', fontsize=18, rotation='vertical', color='black')
 
 
 
@@ -114,7 +121,7 @@ def create_ellipse_plot(output_path="conceptual_ellipse_metrics.pdf"):
 
 # Dein bisheriger Code zum Platzieren des Texts
         ax.text(final_text_pos[0], final_text_pos[1], r'$d_{\mathrm{max}}$',
-        color='black', fontsize=12,
+        color='black', fontsize=18,
         rotation=angle_of_line + 180,
         ha='center', va='center')
 
@@ -139,7 +146,7 @@ def create_rectangle_plot(output_path="conceptual_rectangle_metrics.pdf"):
     """
     Creates a compact, standalone plot for the rectangular uncertainty region and its metrics.
     """
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(7.5, 7.5))
 
     # --- Define Parameters ---
     true_params = np.array([0, 0])
@@ -167,10 +174,10 @@ def create_rectangle_plot(output_path="conceptual_rectangle_metrics.pdf"):
     # --- NEU: Beschriftung für Achsenparallele Abweichung ---
     # Position für epsilon_A (mittig, leicht unter der Linie)
     ax.text(center_rect[0] + epsilons['a'] / 2, center_rect[1] - 0.005, r'$\epsilon_A$',
-            ha='center', va='top', fontsize=12, color='black')
+            ha='center', va='top', fontsize=20, color='black')
     # Position für epsilon_B (mittig, leicht links von der Linie)
     ax.text(center_rect[0] - 0.005, center_rect[1] + epsilons['b'] / 2, r'$\epsilon_B$',
-            ha='right', va='center', fontsize=12, rotation='vertical', color='black')
+            ha='right', va='center', fontsize=20, rotation='vertical', color='black')
 
     # --- Worst-Case Deviation ---
     wdc_vector = np.array([epsilons['a'], epsilons['b']])
@@ -189,7 +196,7 @@ def create_rectangle_plot(output_path="conceptual_rectangle_metrics.pdf"):
     final_text_pos = text_pos_on_line + orthogonal_offset * perp_vec_norm
     angle = np.degrees(np.arctan2(-wdc_vector[1], -wdc_vector[0]))
     ax.text(final_text_pos[0], final_text_pos[1], r'$d_{\mathrm{max}}$',
-            color='black', fontsize=12, rotation=angle + 180,
+            color='black', fontsize=20, rotation=angle + 180,
             ha='center', va='center')
     
     # --- Points ---

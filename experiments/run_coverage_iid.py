@@ -157,15 +157,15 @@ def run_coverage_iid_over_T():
     print("--- Starting Coverage Validation over a range of T ---")
     
     # Configuration 
-    T_RANGE = [8, 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
-    NUM_MC_RUNS_PER_T = 100 # Number of MC runs for each T-value
+    T_RANGE = [ 10, 15, 20, 30, 40, 50, 70, 90, 110, 150, 200, 300, 400, 500]
+    NUM_MC_RUNS_PER_T = 800 # Number of MC runs for each T-value
     CONFIDENCE_DELTA = 0.05 #for plot only, delta config in run_coverage_validation.py
 
     #Loop over T 
     results_list = []
     for T in tqdm(T_RANGE, desc="Total Progress"):
         # Run the full MC simulation for the current T
-        single_result = perform_coverage_run_iid(T=T, num_mc_runs=NUM_MC_RUNS_PER_T)
+        single_result = perform_coverage_run_iid(N=T, num_mc_runs=NUM_MC_RUNS_PER_T)
         # Add the current T to the dictionary for our DataFrame
         single_result['T'] = T
         results_list.append(single_result)

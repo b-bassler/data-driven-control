@@ -34,11 +34,11 @@ def run_bootstrap_dean_trajectory():
     print("--- Starting Bootstrap Dean Experiment ---")
 
     # === 3. Central configuration for the entire experiment ===
-    T = 200
+    T = 100
     TRUE_PARAMS = (0.5, 0.5)  
     
     # Configuration for data generation
-    DATA_SEED = 4
+    DATA_SEED = 1
     SIGMA_W = 0.1
     SIGMA_U = 1.0
     

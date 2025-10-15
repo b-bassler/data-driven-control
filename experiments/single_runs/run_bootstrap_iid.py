@@ -46,7 +46,7 @@ def run_bootstrap_dean_iid():
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     
     # Configuration for the initial data generation
-    DATA_SEED = 1
+    DATA_SEED = 10
     SIGMA_W = 0.1
     SIGMA_U = 1.0
     
@@ -56,7 +56,7 @@ def run_bootstrap_dean_iid():
     BOOTSTRAP_SEED = 2
 
     # Step 2: Generate I.I.D. Data
-    # The data is generated in the shape (features, samples), e.g., (1, N)
+    # The data is generated in the shape (1, N)
     print(f"\nStep 1: Generating {N} I.I.D. data samples...")
     x_iid, u_iid, _, y_iid = generate_iid_samples(
         N=N, system_params=TRUE_PARAMS,

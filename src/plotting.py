@@ -127,7 +127,7 @@ def plot_bootstrap_rectangle(
     ax.plot(
         *estimated_params,
         marker='x', color='red', linestyle='None',
-        markersize=10, label='Estimated (â, b̂)'
+        markersize=10, label='Estimated (a, bb)'
     )
     ax.plot(
         *true_params,
@@ -255,7 +255,11 @@ def plot_multi_metric_comparison(
         output_path (str): The full path to save the plot image.
         use_log_scale (bool, optional): If True, sets the y-axis to a logarithmic scale.
     """
-    fig, ax = plt.subplots(figsize=(12, 7))
+    TITLE_FONTSIZE = 25
+    LABEL_FONTSIZE = 20
+    LEGEND_FONTSIZE = 16
+    TICK_FONTSIZE = 15
+    fig, ax = plt.subplots(figsize=(15, 10))
 
     # Loop through the configuration and plot each specified metric
     for config in metric_configs:
@@ -277,17 +281,17 @@ def plot_multi_metric_comparison(
         else:
             print(f"Warning: Column '{config['col']}' not found in DataFrame '{df_key}'. Skipping plot.")
 
-    ax.set_xlabel("Number of Data Points (N)")
-    ax.set_ylabel(y_label)
-    ax.set_title(title)
-    ax.legend()
+    ax.set_xlabel("Number of Data Points (N)", fontsize=LABEL_FONTSIZE)
+    ax.set_ylabel(y_label, fontsize=LABEL_FONTSIZE) 
+    ax.set_title(title, fontsize=TITLE_FONTSIZE) 
+    ax.legend(fontsize=LEGEND_FONTSIZE) 
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
     if use_log_scale:
         ax.set_yscale('log')
     else:
         ax.set_ylim(bottom=0)
-    
+    ax.tick_params(axis='both', which='major', labelsize=TICK_FONTSIZE) 
     fig.savefig(output_path, bbox_inches='tight', dpi=150)
     plt.close(fig)
 
@@ -343,7 +347,7 @@ def plot_mc_metric_comparison(
     ax.set_title(title, fontsize=TITLE_FONTSIZE) 
     ax.legend(fontsize=LEGEND_FONTSIZE) 
     
-    # NEU: Diese Zeile passt die Größe der Zahlen auf den Achsen an
+
     ax.tick_params(axis='both', which='major', labelsize=TICK_FONTSIZE) 
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
     ax.set_yscale('log')
@@ -604,7 +608,7 @@ def plot_coverage_meta_comparison(
 
     ax.set_xlabel("Number of Data Points (T)")
     ax.set_ylabel("Empirical Failure Rate")
-    ax.set_title("Coverage Meta-Analysis: Mean and Std. Dev. of Failure Rate")
+    #ax.set_title("Coverage Meta-Analysis: Mean and Std. Dev. of Failure Rate")
     ax.legend()
     ax.grid(True, which='both', linestyle='--', linewidth=0.5)
     ax.set_ylim(bottom=0)

@@ -16,16 +16,34 @@ COMPARISON_DATA_DIR = os.path.join(RESULTS_DIR, 'comparison_data')
 FIGURES_DIR = os.path.join(RESULTS_DIR, 'figures', 'final_comparison')
 os.makedirs(FIGURES_DIR, exist_ok=True)
 
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "sans-serif",
+    "text.latex.preamble": r"""
+        \usepackage[T1]{fontenc}
+        \usepackage[light]{firasans}
+        \usepackage{amsmath}
+    """,
+})
+
 # Define parameters consistent with the single runs to plot the true value
 T = 100
 TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
-
+ 
+label_map = {
+        'Data-Dependent (Dean)': 'Data-Dependent',
+        'Data-Dependent (Tsiams)': 'Data-Dependent',
+        'Bootstrap (I.I.D.)': 'Bootstrap',
+        'Bootstrap (Trajectory)': 'Bootstrap',
+        'Set Membership (QMI)': 'Set Membership',
+        
+    }
 # Define consistent colors for the methods
 COLOR_MAP = {
     'Data-Dependent (Dean)': 'blue',
     'Data-Dependent (Tsiams)': 'blue',
-    'Bootstrap (I.I.D.)': 'darkorange',
-    'Bootstrap (Trajectory)': 'darkorange',
+    'Bootstrap (I.I.D.)': 'red',
+    'Bootstrap (Trajectory)': 'red',
     'Set Membership (QMI)': 'green',
 }
 
@@ -48,13 +66,34 @@ def plot_combined_bounds(bounds_list: List[Dict], true_params: tuple, title: str
     """
     fig, ax = plt.subplots(figsize=(8, 8))
 
+
+    label_map = {
+        'Data-Dependent (Dean)': 'Data-Dependent',
+        'Data-Dependent (Tsiams)': 'Data-Dependent',
+        'Bootstrap (I.I.D.)': 'Bootstrap',
+        'Bootstrap (Trajectory)': 'Bootstrap',
+        'Set Membership (QMI)': 'Set Membership',
+
+    }
+
+    plotted_labels = set()
+
     for bound in bounds_list:
         method_name = bound['method']
         color = COLOR_MAP.get(method_name, 'gray') 
         center = bound['center']
 
+        display_label = label_map.get(method_name, method_name)
+
+        if display_label in plotted_labels:
+            plot_label = None 
+        else:
+            plot_label = display_label
+            plotted_labels.add(display_label)
+
         if bound['type'] == 'ellipse':
             p_matrix = bound['p_matrix']
+
             cov_matrix = np.linalg.inv(p_matrix)
             eigenvalues, eigenvectors = np.linalg.eig(cov_matrix)
             order = eigenvalues.argsort()[::-1]
@@ -63,30 +102,35 @@ def plot_combined_bounds(bounds_list: List[Dict], true_params: tuple, title: str
             angle = np.degrees(np.arctan2(*eigenvectors[:, order[0]][::-1]))
 
             fill_patch = Ellipse(xy=center, width=width, height=height, angle=angle,
-                                 facecolor=color, alpha=0.15, label=method_name)
+                                 facecolor=color, alpha=0.15, label=plot_label)
             ax.add_patch(fill_patch)
             border_patch = Ellipse(xy=center, width=width, height=height, angle=angle,
-                                   edgecolor=color, facecolor='none', linewidth=2)
+                                     edgecolor=color, facecolor='none', linewidth=2)
             ax.add_patch(border_patch)
-            ax.plot(center[0], center[1], marker='+', color=color, markersize=12, markeredgewidth=2)
-
+           
         elif bound['type'] == 'rectangle':
             epsilons = bound['epsilons']
+            
+ 
             fill_patch = Rectangle(xy=center - epsilons, width=2*epsilons[0], height=2*epsilons[1],
-                                   facecolor=color, alpha=0.15, linestyle='--', label=method_name)
+                                     facecolor=color, alpha=0.15, linestyle='--', label=plot_label)
             ax.add_patch(fill_patch)
-
             border_patch = Rectangle(xy=center - epsilons, width=2*epsilons[0], height=2*epsilons[1],
-                                     edgecolor=color, facecolor='none', linewidth=2, linestyle='--')
+                                       edgecolor=color, facecolor='none', linewidth=2, linestyle='-')
             ax.add_patch(border_patch)
-            ax.plot(center[0], center[1], marker='+', color=color, markersize=12, markeredgewidth=2)
-
+            
     # Plot true parameter on top of everything
-    ax.plot(true_params[0], true_params[1], 'X', color='red', markersize=12, markeredgewidth=2.5, label='True Parameters')
+    ax.plot(true_params[0], true_params[1], 'x', color='red', markersize=10, markeredgewidth=2.5, label='True Parameters')
+    ax.plot(center[0], center[1], marker='+', color='black', markersize=12, markeredgewidth=2, label = "Least-squares")
+
     
-    ax.set_title(title)
-    ax.set_xlabel('Parameter a')
-    ax.set_ylabel('Parameter b')
+
+    ax.set_title(title, fontsize=16) 
+    ax.set_xlabel('Parameter a', fontsize=20) 
+    ax.set_ylabel('Parameter b', fontsize=20) 
+
+
+    ax.tick_params(axis='both', which='major', labelsize=15) 
     ax.legend()
     ax.grid(True)
     ax.axis('equal')
@@ -110,7 +154,7 @@ def generate_all_comparison_plots():
         plot_combined_bounds(
             bounds_list=iid_bounds,
             true_params=tuple(TRUE_PARAMS.values()),
-            title=f'Uncertainty Bounds Comparison (I.I.D. Data, N={T})',
+            title=None,
             output_path=os.path.join(FIGURES_DIR, 'comparison_iid.pdf')
         )
     else:
@@ -128,7 +172,7 @@ def generate_all_comparison_plots():
         plot_combined_bounds(
             bounds_list=trajectory_bounds,
             true_params=tuple(TRUE_PARAMS.values()),
-            title=f'Uncertainty Bounds Comparison (Trajectory Data, N={T})',
+            title= None,
             output_path=os.path.join(FIGURES_DIR, 'comparison_trajectory.pdf')
         )
     else:

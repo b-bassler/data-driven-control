@@ -6,6 +6,18 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "sans-serif",
+    "text.latex.preamble": r"""
+        \usepackage[T1]{fontenc}
+        \usepackage[light]{firasans}
+        \usepackage{amsmath}
+    """,
+})
+
+
 # --- Add project root to Python path to allow imports from src ---
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 if project_root not in sys.path:
@@ -47,8 +59,8 @@ def analyze_and_plot_cv():
     # --- 2. Calculate the Coefficient of Variation (CV) for all methods and metrics ---
     metrics_to_analyze = [
         'set_membership_area', 'set_membership_wcd', 'set_membership_max_dev_a', 'set_membership_max_dev_b',
-        'bootstrap_area', 'bootstrap_wcd', 'bootstrap_max_dev_a', 'bootstrap_max_dev_b',
-        'dd_bounds_area', 'dd_bounds_wcd', 'dd_bounds_max_dev_a', 'dd_bounds_max_dev_b'
+        'bootstrap_area', 'bootstrap_wcd', 'bootstrap_max_dev_b', 'bootstrap_max_dev_a',
+        'dd_bounds_area', 'dd_bounds_wcd', 'dd_bounds_max_dev_b', 'dd_bounds_max_dev_a'
     ]
     
     cv_df_a050 = pd.DataFrame(index=df_a050.index)
@@ -107,56 +119,29 @@ def analyze_and_plot_cv():
 
 # --- 3. Generate focused plots for Max Deviation CV ---
 
-    # Plot 3a: Relative Variability of Parameter 'a' Estimate
-    plot_configs_dev_a = [
-        # Data-Dependent
-        {'df': 'a050', 'col': 'dd_bounds_max_dev_a', 'label': 'Data-Dep. (a=0.50)', 'color': 'blue', 'linestyle': '-'},
-        {'df': 'a099', 'col': 'dd_bounds_max_dev_a', 'label': 'Data-Dep. (a=0.99)', 'color': 'deepskyblue', 'linestyle': '--'},
-        # Bootstrap
-        {'df': 'a050', 'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a=0.50)', 'color': 'orange', 'linestyle': '-'},
-        {'df': 'a099', 'col': 'bootstrap_max_dev_a', 'label': 'Bootstrap (a=0.99)', 'color': 'gold', 'linestyle': '--'},
-        # Set Membership
-        {'df': 'a050', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. (a=0.50)', 'color': 'green', 'linestyle': '-'},
-        {'df': 'a099', 'col': 'set_membership_max_dev_a', 'label': 'Set Memb. (a=0.99)', 'color': 'limegreen', 'linestyle': '--'},
-    ]
-
-    output_path_a = os.path.join(FIGURES_DIR, "cv_comparison_max_dev_a.png")
-    plot_multi_metric_comparison(
-        dataframes=dataframes, 
-        metric_configs=plot_configs_dev_a, 
-        x_col='T',
-        y_label='Coefficient of Variation (CV)',
-        title='Relative Variability of Parameter \'a\' Estimate',
-        output_path=output_path_a, 
-        use_log_scale=False,
-    )
-    print(f"-> CV comparison plot for Parameter 'a' saved to: {output_path_a}")
-
-    # Plot 3b: Relative Variability of Parameter 'b' Estimate
+    # Plot 3b: Relative Variability of Parameter 'a' Estimate
     plot_configs_dev_b = [
-    # Data-Dependent
-    {'df': 'a050', 'col': 'dd_bounds_max_dev_b', 'label': 'Data-Dep. (a=0.50), dev_b', 'color': 'blue', 'linestyle': '-'},
-    {'df': 'a099', 'col': 'dd_bounds_max_dev_b', 'label': 'Data-Dep. (a=0.99), dev_b', 'color': 'deepskyblue', 'linestyle': '--'},
+
     # Bootstrap
-    {'df': 'a050', 'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (a=0.50), dev_b', 'color': 'orange', 'linestyle': '-'},
-    {'df': 'a099', 'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (a=0.99), dev_b', 'color': 'gold', 'linestyle': '--'},
+    {'df': 'a050', 'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (a=0.50)', 'color': 'red', 'linestyle': '-', 'linewidth': 5},
+    {'df': 'a099', 'col': 'bootstrap_max_dev_b', 'label': 'Bootstrap (a=0.99)', 'color': '#f98686', 'linestyle': '--', 'linewidth': 5},
     # Set Membership
-    {'df': 'a050', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. (a=0.50), dev_b', 'color': 'green', 'linestyle': '-'},
-    {'df': 'a099', 'col': 'set_membership_max_dev_b', 'label': 'Set Memb. (a=0.99), dev_b', 'color': 'limegreen', 'linestyle': '--'},
+    {'df': 'a050', 'col': 'set_membership_max_dev_b', 'label': 'Set Membership (a=0.50)', 'color': 'green', 'linestyle': '-', 'linewidth': 5},
+    {'df': 'a099', 'col': 'set_membership_max_dev_b', 'label': 'Set Membership (a=0.99)', 'color': 'limegreen', 'linestyle': '--', 'linewidth': 5},
     ]
 
 
-    output_path_b = os.path.join(FIGURES_DIR, "cv_comparison_max_dev_b.png")
+    output_path_a = os.path.join(FIGURES_DIR, "cv_comparison_max_dev_a.pdf")
     plot_multi_metric_comparison(
         dataframes=dataframes, 
         metric_configs=plot_configs_dev_b, 
         x_col='T',
         y_label='Coefficient of Variation (CV)',
-        title='Relative Variability of Parameter \'b\' Estimate',
-        output_path=output_path_b, 
+        title=None,
+        output_path=output_path_a, 
         use_log_scale=False,
     )
-    print(f"-> CV comparison plot for Parameter 'b' saved to: {output_path_b}")
+    print(f"-> CV comparison plot for Parameter 'a' saved to: {output_path_a}")
 
 if __name__ == '__main__':
     analyze_and_plot_cv()

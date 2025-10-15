@@ -34,7 +34,7 @@ def run_data_dependent_bounds_experiment():
 
     # === 3. Central configuration for the entire experiment ===
     T = 100
-    DATA_SEED = 2 # Consistent seed for comparison
+    DATA_SEED = 10 
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     TRUE_PARAMS_TUPLE = tuple(TRUE_PARAMS.values())

@@ -30,8 +30,8 @@ def run_set_membership_iid_experiment():
     print("--- Starting Single Run: QMI-based Ellipse Analysis ---")
 
     # === 3. Central Configuration for this specific run 
-    T = 200  # number of data points 
-    DATA_SEED = 2
+    T = 100  # number of data points 
+    DATA_SEED = 1
     
     TRUE_PARAMS = {'a': 0.5, 'b': 0.5}
     NOISE_STD_DEV_W = 0.1
