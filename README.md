@@ -6,9 +6,9 @@
 This repository contains the source code for my bachelor's thesis, **"Comparison of the impact of measurement uncertainties on data-driven control"**.
 
 The project implements and analyzes advanced System Identification and Set Membership techniques for Linear Time-Invariant (LTI) systems. It focuses on characterizing model uncertainty using three distinct approaches:
-1. **Analytical Data-Dependent Bounds** (High theoretical guarantees, conservative)
-2. **Bootstrap Resampling** (Data-driven, precise, robust)
-3. **Set Membership Identification** (Worst-case deterministic bounds)
+1. **Analytical Data-Dependent Bounds** 
+2. **Resampling based Guarantees**
+3. **Set Membership Identification** 
 
 ---
 
