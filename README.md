@@ -1,8 +1,41 @@
 # System Identification and Uncertainty Quantification for LTI Systems
 
-This repository contains the source code for the bachelor's thesis, "Comparison of the impact of measurement
-uncertainties on data-driven control". The project implements and conducts a comparative analysis of several system identification and Set Membership techniques for Linear Time-Invariant (LTI) systems, focusing on the distinction between methods based on trajectory data versus those based on independent and identically distributed (i.i.d.) samples.
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
+This repository contains the source code for my bachelor's thesis, **"Comparison of the impact of measurement uncertainties on data-driven control"**.
+
+The project implements and analyzes advanced System Identification and Set Membership techniques for Linear Time-Invariant (LTI) systems. It focuses on characterizing model uncertainty using three distinct approaches:
+1. **Analytical Data-Dependent Bounds** (High theoretical guarantees, conservative)
+2. **Bootstrap Resampling** (Data-driven, precise, robust)
+3. **Set Membership Identification** (Worst-case deterministic bounds)
+
+---
+
+## 📊 Visualizations & Key Results
+
+### 1. Qualitative Analysis: I.I.D. vs. Trajectory Data
+The shape of the uncertainty regions differs significantly depending on the data paradigm.
+
+**I.I.D. Data:**
+In the independent sampling scenario, the uncertainty is distributed evenly. The **Bootstrap** (red rectangle) and **Set Membership** (green ellipse) methods produce tight regions around the true parameters.
+
+![IID Regions](assets/iid_regions.png)
+*(Fig: Uncertainty regions for a single simulation run using i.i.d. data)*
+
+**Trajectory Data:**
+When using correlated trajectory data, the ellipses become tilted due to the correlation between parameters. The **Data-Dependent Bounds** (blue) remain highly conservative compared to the other methods.
+
+![Trajectory Regions](assets/trajectory_regions.png)
+*(Fig: Uncertainty regions for a single simulation run using trajectory data)*
+
+### 2. Quantitative Performance: The "Marginally Stable" Case
+A key finding of this thesis is the reliability trade-off in systems near the stability boundary ($a=0.99$).
+
+The plot below shows the mean axis-aligned deviation. While **Set Membership** (green) is precise on average, it exhibits **high variance** (large shaded area) in this challenging scenario. The **Bootstrap method** (red) proves to be the most robust, offering consistent results with low variance.
+
+![Monte Carlo Results](assets/monte_carlo_results.png)
+*(Fig: Comparison of mean axis-aligned deviation for a marginally stable system (a=0.99). The shaded areas represent the standard deviation across 500 Monte Carlo runs.)*
 ---
 
 ## Project Structure
