@@ -21,13 +21,12 @@ The shape of the uncertainty regions differs significantly depending on the data
 In the independent sampling scenario, the uncertainty is distributed evenly. The **Bootstrap** (red rectangle) and **Set Membership** (green ellipse) methods produce tight regions around the true parameters.
 
 ![IID Regions](assets/iid_regions.png)
-*(Fig: Uncertainty regions for a single simulation run using i.i.d. data)*
 
 **Trajectory Data:**
 When using correlated trajectory data, the ellipses become tilted due to the correlation between parameters. The **Data-Dependent Bounds** (blue) remain highly conservative compared to the other methods.
 
 ![Trajectory Regions](assets/trajectory_regions.png)
-*(Fig: Uncertainty regions for a single simulation run using trajectory data)*
+
 
 ### 2. Quantitative Performance: The "Marginally Stable" Case
 A key finding of this thesis is the reliability trade-off in systems near the stability boundary ($a=0.99$).
